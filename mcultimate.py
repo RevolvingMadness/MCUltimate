@@ -20,20 +20,23 @@ class Pos:
         return (self.x + ' ' + self.y + ' ' + self.z)
 
 class Scoreboard:
-    def __init__(self, datapack, name, criteria):
+    datapack = 'd'
+    def matches(values, result):
+        global datapack
+        for item in values:
+            open(datapack.tickfunc, 'a').write(f'execute if score @s {item} matches {str(values.get(item))} run ')
+        if type(result) == str:
+            open(datapack.tickfunc, 'a').write(result + '\n')
+        elif type(result) == Function:
+            open(datapack.tickfunc, 'a').write(f'function {datapack.namespace}:{result.filename}\n')
+
+    def __init__(self, datapack_arg, name, criteria):
+        global datapack
         self.name = name
         self.criteria = criteria
-        self.datapack = datapack
+        self.datapack = datapack_arg
+        datapack = datapack_arg
         self.value = {}
-
-    def matches(self, value, does_match_func, who='@s'):
-        if type(does_match_func) == Function:
-            print('match func')
-            return f'execute as @a at @s run execute if score @s {self.name} matches {value} run function {self.datapack.namespace}:{does_match_func.filename}'
-        else:
-            open(self.datapack.tickfunc, 'a').write(f'execute if score {who} {self.name} matches {value} run {does_match_func}\n')
-            print('match not func')
-        
 
     def set_score(self, who, value):
         open(self.datapack.tickfunc, 'a').write(f'scoreboard players set {who} {self.name} {str(value)}\n')
@@ -183,8 +186,8 @@ class ArmorItems:
         return self.to_nbt()
 
 class Datapack:
-    def __init__(self, namespace, location, desc=''):
-        self.location = location
+    def __init__(self, namespace, location_arg, desc=''):
+        self.location = location_arg
         self.namespace = namespace
         self.desc = desc
         self.tickfunc = self.location + f'/data/{self.namespace}/functions/tick.mcfunction'
