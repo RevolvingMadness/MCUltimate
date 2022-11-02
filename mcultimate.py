@@ -234,7 +234,7 @@ class Datapack:
         open(self.loadfunc, 'a').write(f'scoreboard objectives add {object.name} {object.criteria}\n')
         return object
 
-    def addtrigger(self, name, on_trigger):
+    def add_trigger(self, name, on_trigger):
         open(self.location + f'/data/{self.namespace}/functions/load.mcfunction', 'a').write('scoreboard objectives add givedia trigger\n')
         open(self.location + f'/data/{self.namespace}/functions/tick.mcfunction', 'a').write(f'execute as @a at @s run execute if score @s {name} matches 1.. run function {self.namespace}:{on_trigger.filename}\n')
         open(self.location + f'/data/{self.namespace}/functions/tick.mcfunction', 'a').write(f'scoreboard players set @a {name} 0\n')
@@ -300,6 +300,9 @@ class Function:
         nbtdata += '}'
         open(self.location, 'a').write('summon ' + entity + ' ' + pos.to_str() + ' ' + nbtdata)
         return 'summon ' + entity + ' ' + pos.to_str() + ' ' + nbtdata
+    
+    def if_score(score, value):
+        open(self.location, 'a').write(f'execute if score @s {score} matches {value} run ')
 
 class Command:
     def say(text): # /say <text>
@@ -329,5 +332,5 @@ class Command:
         nbtdata += '}'
         return 'summon ' + entity + ' ' + pos.to_str() + ' ' + nbtdata
 
-    def if_score(who, score, value, cmd):
-        return f'execute if score {who} {score} matches {value} run {cmd}'
+    def if_score(score, value):
+        return f'execute if score @s {score} matches {value} run '
