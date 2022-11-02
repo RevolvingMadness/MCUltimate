@@ -10,7 +10,7 @@ jump = Scoreboard('jump_scoreboard', 'minecraft.custom:minecraft.jump')
 Scoreboard.matches({ # if the jump score matches 1 do the following command on the next line
   'jump': 1'
 })
-tick.say('hi') # the tick.mcfunction file 'say hi'
+tick.say('you just jumped!') # the tick.mcfunction file 'say hi'
 # set everyones jump score to 0
 jump.set_score(Player.EVERYONE, 0)
 ```
