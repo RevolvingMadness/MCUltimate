@@ -32,6 +32,11 @@ When you are coding, the names of the variables **DO NOT MATTER!!!**
   ```
   
 </details>
+
+<details><summary><strong>Cool Programs</strong></summary>
+	
+</details>
+
 <details>
 
   <summary><strong>Scoreboards</strong></summary>
@@ -72,4 +77,19 @@ When you are coding, the names of the variables **DO NOT MATTER!!!**
   jump.set_score(Player.EVERYONE, 0)
   sneak.set_score(Player.EVERYONE, 0)
   ```
+</details>
+
+## Documentation
+Classes
+<details><summary><strong>Color</strong></summary>
+
+#### Usage
+```python
+...
+
+tick.tellraw(Player.EVERYONE, [{
+	'text': 'This is the color yellow',
+	'color': Color.YELLOW
+}]
+```
 </details>
