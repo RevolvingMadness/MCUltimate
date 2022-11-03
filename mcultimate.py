@@ -1,5 +1,4 @@
 import os, shutil
-from mcultimate_vars import *
 
 class Trigger:
     def __init__(self, datapack, name, on_trigger):
@@ -159,6 +158,27 @@ class Entity:
     ZOMBIE_VILLAGER = 'zombie_villager'
     ZOMBIFIED_PIGLIN = 'zombified_piglin'
 
+class Color:
+    BLACK = 'black'
+    DARK_BLUE = 'dark_blue'
+    DARK_GREEN = 'dark_green'
+    DARK_AQUA = 'dark_aqua'
+    DARK_RED = 'dark_red'
+    DARK_PURPLE = 'dark_purple'
+    GOLD = 'gold'
+    GRAY = 'gray'
+    DARK_GRAY = 'dark_gray'
+    BLUE = 'blue'
+    GREEN = 'green'
+    AQUA = 'aqua'
+    RED = 'red'
+    LIGHT_PURPLE = 'light_purple'
+    PURPLE = 'light_purple'
+    YELLOW = 'yellow'
+    WHITE = 'white'
+    def RGB(red, green, blue):
+        return "#{:02x}{:02x}{:02x}".format(red,green,blue)
+
 class Player:
     EVERYONE      = '@a'
     EVERYBODY     = '@a'
@@ -188,7 +208,7 @@ class ArmorItems:
 class Datapack:
     def __init__(self, namespace, location_arg, desc=''):
         self.location = location_arg
-        self.namespace = namespace
+        self.namespace = namespace.lower()
         self.desc = desc
         self.tickfunc = self.location + f'/data/{self.namespace}/functions/tick.mcfunction'
         self.loadfunc = self.location + f'/data/{self.namespace}/functions/load.mcfunction'
@@ -280,10 +300,37 @@ class Function:
         open(self.location, 'a').write(f'scoreboard players enable {who} {trigger.name}\n')
         return f'scoreboard players enable {who} {trigger.name}\n'
 
-    def tellraw(self, text, who): # /tellraw <who> <text>
+    def tellraw(self, who, text): # /tellraw <who> <text>
         text = str(text).replace('\'', '"').replace('\n', '')
         open(self.location, 'a').write(f'tellraw {who} {text}\n')
         return f'tellraw {who} {text}\n'
+    
+    def title(self, who, title): # /title <who> title <title>
+        title = str(title).replace('\'', '"').replace('\n', '')
+        open(self.location, 'a').write(f'title {who} title {title}\n')
+        return f'title {who} title {title}\n'
+    
+    def subtitle(self, who, subtitle): # /title <who> subtitle <subtitle>
+        subtitle = str(subtitle).replace('\'', '"').replace('\n', '')
+        open(self.location, 'a').write(f'title {who} subtitle {subtitle}\n')
+        return f'title {who} subtitle {subtitle}\n'
+    
+    def actionbar(self, who, actionbar): # /title <who> actionbar <actionbar>
+        actionbar = str(actionbar).replace('\'', '"').replace('\n', '')
+        open(self.location, 'a').write(f'title {who} actionbar {actionbar}\n')
+        return f'title {who} actionbar {actionbar}\n'
+
+    def clear(self, who): # /title <who> clear
+        open(self.location, 'a').write(f'title {who} clear\n')
+        return f'title {who} clear\n'
+
+    def times(self, who, fade_in, stay, fade_out): # /title <who> times <fade_in> <stay> <fade_out>
+        open(self.location, 'a').write(f'title {who} times {fade_in} {stay} {fade_out}\n')
+        return f'title {who} times {fade_in} {stay} {fade_out}\n'
+
+    def reset(self, who):
+        open(self.location, 'a').write(f'title {who} reset\n')
+        return f'title {who} reset\n'
 
     def kill(self, who): # /kill <who>
         open(self.location, 'a').write(f'kill {who}\n')
