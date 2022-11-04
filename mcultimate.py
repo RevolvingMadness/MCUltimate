@@ -6,6 +6,20 @@ class Trigger:
         self.name = name
         self.on_trigger = on_trigger
 
+class List:
+    def __init__(self, *args):
+        self.args = args
+
+    def __repr__(self):
+        return str(list(self.args))
+
+class Double:
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return f'{str(self.value)}d'
+
 class Pos:
     def __init__(self, x, y, z):
         self.x = x
@@ -188,6 +202,7 @@ class Player:
     ENTITIES      = '@e'
     ALL_ENTITIES  = '@e'
     NEAREST       = '@p'
+    player_types = ['@a', '@s', '@r', '@e', '@p']
     def __init__(self, name, tags):
         self.name = name
         self.tags = tags
@@ -245,9 +260,6 @@ class Datapack:
         os.mkdir(self.location + f'/data/{self.namespace}/functions')
         self.function_num = 1
 
-    def execute_as(self, who, func):
-        open(self.location + f'/data/{self.namespace}/functions/{func.filename}.mcfunction', 'a').write(f'execute as {who} at @s run ')
-
     def add_scoreboard(self, object):
         object.datapack = self
         open(self.loadfunc, 'a').write(f'scoreboard objectives remove {object.name}\n')
@@ -283,6 +295,12 @@ class Function:
             self.location = datapack.location + f'/data/{datapack.namespace}/functions/function{str(datapack.function_num)}.mcfunction'
             self.filename = f'function{str(datapack.function_num)}'
             datapack.function_num += 1
+
+    def execute_as(self, who):
+        if who in Player.player_types:
+            open(self.location + f'/data/{self.datapack.namespace}/functions/{self.filename}.mcfunction', 'a').write(f'execute as {who} at @s run ')
+        else:
+            open(self.location + f'/data/{self.datapack.namespace}/functions/{self.filename}.mcfunction', 'a').write(f'execute as @e[type={who}] at @s run ')
 
     def say(self, text): # /say <text>
         open(self.location, 'a').write(f'say {text}\n')
