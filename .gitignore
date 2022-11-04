@@ -1,6 +1,4 @@
 .vscode/
 .obsidian/
 __pycache__/
-custom_datapack/
-thing.py
 main.py
