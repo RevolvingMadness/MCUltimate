@@ -27,7 +27,7 @@ When you are coding, the names of the variables **DO NOT MATTER!!!**
   load_func = Function(pack, 'load')
   load_func.tellraw(Player.EVERYONE, [{ # this code converts into tellraw @a [{"text":"Reloaded!", "color":"green"}]
 	'text': 'Reloaded!',
-	'color: Color.GREEN
+	'color': Color.GREEN
   }])
   ```
   
