@@ -24,7 +24,7 @@ When you are coding, the names of the variables **DO NOT MATTER!!!**
   ```python
   from mcultimate import *
   datapack = Datapack('custom', './datapack')
-  load_func = Function(pack, 'load')
+  load_func = Function(datapack, 'load')
   load_func.tellraw(Player.EVERYONE, [{ # this code converts into tellraw @a [{"text":"Reloaded!", "color":"green"}]
 	'text': 'Reloaded!',
 	'color': Color.GREEN
