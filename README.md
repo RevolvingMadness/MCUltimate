@@ -1,5 +1,5 @@
 # MCUltimate
-MCUltimate is a python libary for creating minecraft datapacks.
+MCUltimate is a python libary for creating minecraft datapacks and resourcepacks.
 
 ## Tips
 When you are coding, the names of the variables **DO NOT MATTER!!!**
