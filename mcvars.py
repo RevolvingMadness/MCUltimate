@@ -1,4 +1,5 @@
 # Blocks
+AIR = 'air'
 STONE = 'stone'
 GRANITE = 'granite'
 POLISHED_GRANITE = 'polished_granite'

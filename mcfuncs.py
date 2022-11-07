@@ -1,18 +1,10 @@
 from mcvars import *
-def until_char(text, char):
-    res = ''
-    for i in range(len(text)):
-        if text[i] != char:
-            res += text[i]
-        else:
-            break
-    return res
-
-def to_nbt_item(item):
-    item = str(item)[1:-1]
+def to_nbt_item(item, count, nbts=[]):
     text = ''
-    text += 'id:"' + until_char(item, '{') + '",Count:1b,tag:{'
-    item = item[len(until_char(item, '{')):]
-    item = item[1:-1]
-    text += item + '}}'
-    return text
+    text = 'Item:{id:"minecraft:' + item + '",Count:' + str(count)+ 'b'
+    if nbts != []:
+        text += ',tag:{'
+        for nbt in nbts:
+            text += str(nbt)
+        text += '}'
+    text += '}}'
