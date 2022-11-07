@@ -93,3 +93,16 @@ tick.tellraw(Player.EVERYONE, [{
 }]
 ```
 </details>
+
+# Installation
+
+1. Download these three files and put them in the same folder
+    `a. mcultimate.py`
+    `b. mcfuncs.py`
+    `c. mcvars.py`
+2. Create your main file ex. main.py
+3. and import mcultimate
+```python
+from mcultimate import *
+```
+4. Once you have typed your code just run `$ python main.py` and enjoy!
