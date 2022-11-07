@@ -137,9 +137,26 @@ class Player:
     NEAREST = '@p'
     player_types = ['@a', '@s', '@r', '@e', '@p']
 
-    def __init__(self, name, tags):
+    def __init__(self, name, nbt):
         self.name = name
-        self.tags = tags
+        self.nbt = nbt
+        if name in Player.player_types:
+            self.text = name + '['
+        else:
+            if nbt != []:
+                self.text = '@a[name=' + name
+                self.text += ','
+        for i, val in enumerate(self.nbt):
+            if type(val) == Tags:
+                self.text += val.to_nbt()
+            else:
+                self.text += str(val)
+            if i != len(self.nbt)-1:
+                self.text += ','
+        self.text += ']'
+
+    def __repr__(self):
+        return self.text
 
 
 class ArmorItems:
@@ -160,6 +177,7 @@ class Datapack:
     def __init__(self, namespace, location_arg, desc=''):
         self.location = location_arg
         self.namespace = namespace.lower()
+        self.custom_items = []
         self.desc = desc
         self.tickfunc = self.location + \
             f'/data/{self.namespace}/functions/tick.mcfunction'
@@ -526,9 +544,18 @@ class Tags:
             if i != len(tags)-1:
                 self.text += ','
         self.text += ']'
+        self.tags = tags
 
-    def __repr__(self):
+    def normal(self):
         return self.text
+    
+    def to_nbt(self):
+        self.result = ''
+        for i, tag in enumerate(self.tags):
+            self.result += 'tag=' + tag
+            if i != len(self.tags)-1:
+                self.result += ','
+        return self.result
 
 
 class Rotation:
@@ -591,17 +618,40 @@ class Item:
         print(result)
         return result
 
+class BlockState:
+    def __init__(self, blockstate):
+        self.text = 'BlockState:{Name:"minecraft:'
+        hascustomproperties = 0
+        for i, nbt in enumerate(blockstate):
+            if nbt == "Name":
+                self.text += blockstate.get(nbt) + '"'
+            else:
+                if hascustomproperties == 0:
+                    self.text += 'Properties:{'
+                hascustomproperties = 1
+                self.text += nbt + ':"' + blockstate.get(nbt) + '"'
+            if i != len(blockstate)-1:
+                self.text += ','
+        
+        if hascustomproperties:
+            self.text += '}'
+        self.text += '}'
+    
+    def __repr__(self):
+        return self.text
 
 class Entity:
-    def __init__(self, entity, nbt):
+    def __init__(self, entity, nbt=[]):
         self.entity = entity
-        self.text = '@e[type=' + entity
+        self.text = '@e[type=' + self.entity
         if nbt != []:
             self.text += ',nbt={'
         self.nbt = nbt
         for i, tag in enumerate(self.nbt):
             if type(tag) == Item:
                 self.text += tag.to_entity()
+            else:
+                self.text += str(tag)
 
             if i != len(self.nbt)-1:
                 self.text += ','
@@ -613,7 +663,18 @@ class Entity:
     def __repr__(self):
         return self.text
 
+class Scores:
+    def __init__(self, scores):
+        self.scores = scores
+        self.text = 'scores={'
+        for i, score in enumerate(self.scores):
+            self.text += score + '=' + self.scores.get(score)
+            if i != len(self.scores)-1:
+                self.text += ','
+        self.text += '}'
 
+    def __repr__(self):
+        return self.text
 
 ######################## RESOURCE PACKS ########################
 
@@ -622,6 +683,9 @@ class Resourcepack:
         self.name = path.split('/')[-1]
         self.tloc = textures_location
         self.path = path
+        self.windex = 101
+        self.done_creating = 0
+        self.writes = 0
         try:
             os.mkdir(path)
         except:
@@ -638,9 +702,48 @@ class Resourcepack:
         os.mkdir(path + '/assets/minecraft/textures')
         os.mkdir(path + '/assets/minecraft/textures/block')
         os.mkdir(path + '/assets/minecraft/textures/item')
+        os.mkdir(path + '/assets/minecraft/models')
+        os.mkdir(path + '/assets/minecraft/models/item')
+        os.mkdir(path + '/assets/minecraft/models/block')
     
     def replace_block_texture(self, block, texture):
         shutil.copyfile(self.tloc + "/" + texture, self.path + "/assets/minecraft/textures/block/" + block + ".png")
     
     def replace_item_texture(self, item, texture):
         shutil.copyfile(self.tloc + "/" + texture, self.path + "/assets/minecraft/textures/item/" + item + ".png")
+    
+    '''Cool Doc'''
+    def add_custom_item(self, item_display_name, texture, replace_item, custom_model_data, create_trigger_for_item):
+        self.item_display_name = item_display_name
+        self.texture = texture
+        self.replace_item = replace_item
+        self.cmdata = custom_model_data
+        self.hastrigger = create_trigger_for_item
+        self.mjson = self.path + "/assets/minecraft/models/item/" + self.replace_item + ".json"
+
+        shutil.copyfile(self.tloc + "/" + texture, self.path + "/assets/minecraft/textures/item/" + texture)
+        open(self.path + "/assets/minecraft/models/item/" + texture.replace('.png', '.json'), 'w').write(('{\n'
+    '    "parent": "item/handheld",\n'
+    '    "textures": {\n'
+f'        "layer0": "item/' + texture.replace('.png', '') + '"\n'
+    '    }\n'
+    '}\n'))
+        if not self.done_creating:
+            open(self.path + "/assets/minecraft/models/item/" + self.replace_item + ".json", 'w').write(('{\n'
+    '	"parent": "item/generated",\n'
+    '	"textures": {\n'
+    f'		"layer0": "item/{self.replace_item}"\n'
+    '	},\n'
+    '	\n'
+    '	"overrides": [\n\n'
+    '	]\n'
+    '}\n'))
+            self.done_creating = 1
+        
+        insert_to_file(self.mjson, self.windex, '\t\t{"predicate": {"custom_model_data":' + str(self.cmdata) + '}, "model": "item/' + self.texture.replace('.png', '') + '"}\n')
+        if self.writes > 0:
+            insert_to_file(self.mjson, self.windex-1, ',')
+        else:
+            self.windex -= 1
+        self.writes += 1
+        self.windex += len('\t\t{"predicate": {"custom_model_data":' + str(self.cmdata) + '}, "model": "item/' + self.texture.replace('.png', '') + '"}')+2
