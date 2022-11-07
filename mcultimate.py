@@ -1,4 +1,8 @@
 import os, shutil
+from mcfuncs import *
+
+class Test:
+    ...
 
 class Trigger:
     def __init__(self, datapack, name, on_trigger):
@@ -54,123 +58,54 @@ class Scoreboard:
     def set_score(self, who, value):
         open(self.datapack.tickfunc, 'a').write(f'scoreboard players set {who} {self.name} {str(value)}\n')
 
-class Entity:
-    ALLAY = 'allay'
-    AREA_EFFECT_CLOUD = 'area_effect_cloud'
-    ARMOR_STAND = 'armor_stand'
-    ARROW = 'arrow'
-    AXOLOTL = 'axolotl'
-    BAT = 'bat'
-    BEE = 'bee'
-    BLAZE = 'blaze'
-    BOAT = 'boat'
-    CAT = 'cat'
-    CAVE_SPIDER = 'cave_spider'
-    CHEST_BOAT = 'chest_boat'
-    CHEST_MINECART = 'chest_minecart'
-    CHICKEN = 'chicken'
-    COD = 'cod'
-    COMMAND_BLOCK_MINECART = 'command_block_minecart'
-    COW = 'cow'
-    CREEPER = 'creeper'
-    DOLPHIN = 'dolphin'
-    DONKEY = 'donkey'
-    DRAGON_FIREBALL = 'dragon_fireball'
-    DROWNED = 'drowned'
-    EGG = 'egg'
-    ELDER_GUARDIAN = 'elder_guardian'
-    END_CRYSTAL = 'end_crystal'
-    ENDER_DRAGON = 'ender_dragon'
-    ENDER_PEARL = 'ender_pearl'
-    ENDERMAN = 'enderman'
-    ENDERMITE = 'endermite'
-    EVOKER = 'evoker'
-    EVOKER_FANGS = 'evoker_fangs'
-    EXPERIENCE_BOTTLE = 'experience_bottle'
-    EXPERIENCE_ORB = 'experience_orb'
-    EYE_OF_ENDER = 'eye_of_ender'
-    FALLING_BLOCK = 'falling_block'
-    FIREBALL = 'fireball'
-    FIREWORK_ROCKET = 'firework_rocket'
-    FOX = 'fox'
-    FROG = 'frog'
-    FURNACE_MINECART = 'furnace_minecart'
-    GHAST = 'ghast'
-    GIANT = 'giant'
-    GLOW_ITEM_FRAME = 'glow_item_frame'
-    GLOW_SQUID = 'glow_squid'
-    GOAT = 'goat'
-    GUARDIAN = 'guardian'
-    HOGLIN = 'hoglin'
-    HOPPER_MINECART = 'hopper_minecart'
-    HORSE = 'horse'
-    HUSK = 'husk'
-    ILLUSIONER = 'illusioner'
-    IRON_GOLEM = 'iron_golem'
-    ITEM = 'item'
-    ITEM_FRAME = 'item_frame'
-    LEASH_KNOT = 'leash_knot'
-    LIGHTNING_BOLT = 'lightning_bolt'
-    LLAMA = 'llama'
-    LLAMA_SPIT = 'llama_spit'
-    MAGMA_CUBE = 'magma_cube'
-    MARKER = 'marker'
-    MINECART = 'minecart'
-    MOOSHROOM = 'mooshroom'
-    MULE = 'mule'
-    OCELOT = 'ocelot'
-    PAINTING = 'painting'
-    PANDA = 'panda'
-    PARROT = 'parrot'
-    PHANTOM = 'phantom'
-    PIG = 'pig'
-    PIGLIN = 'piglin'
-    PIGLIN_BRUTE = 'piglin_brute'
-    PILLAGER = 'pillager'
-    POLAR_BEAR = 'polar_bear'
-    POTION = 'potion'
-    PUFFERFISH = 'pufferfish'
-    RABBIT = 'rabbit'
-    RAVAGER = 'ravager'
-    SALMON = 'salmon'
-    SHEEP = 'sheep'
-    SHULKER = 'shulker'
-    SHULKER_BULLET = 'shulker_bullet'
-    SILVERFISH = 'silverfish'
-    SKELETON = 'skeleton'
-    SKELETON_HORSE = 'skeleton_horse'
-    SLIME = 'slime'
-    SMALL_FIREBALL = 'small_fireball'
-    SNOW_GOLEM = 'snow_golem'
-    SNOWBALL = 'snowball'
-    SPAWNER_MINECART = 'spawner_minecart'
-    SPECTRAL_ARROW = 'spectral_arrow'
-    SPIDER = 'spider'
-    SQUID = 'squid'
-    STRAY = 'stray'
-    STRIDER = 'strider'
-    TADPOLE = 'tadpole'
-    TNT = 'tnt'
-    TNT_MINECART = 'tnt_minecart'
-    TRADER_LLAMA = 'trader_llama'
-    TRIDENT = 'trident'
-    TROPICAL_FISH = 'tropical_fish'
-    TURTLE = 'turtle'
-    VEX = 'vex'
-    VILLAGER = 'villager'
-    VINDICATOR = 'vindicator'
-    WANDERING_TRADER = 'wandering_trader'
-    WARDEN = 'warden'
-    WITCH = 'witch'
-    WITHER = 'wither'
-    WITHER_SKELETON = 'wither_skeleton'
-    WITHER_SKULL = 'wither_skull'
-    WOLF = 'wolf'
-    ZOGLIN = 'zoglin'
-    ZOMBIE = 'zombie'
-    ZOMBIE_HORSE = 'zombie_horse'
-    ZOMBIE_VILLAGER = 'zombie_villager'
-    ZOMBIFIED_PIGLIN = 'zombified_piglin'
+class Enchantment:
+    AQUA_AFFINITY = 'aqua_affinity'
+    BANE_OF_ARTHROPODS = 'bane_of_arthropods'
+    BLAST_PROTECTION = 'blast_protection'
+    CHANNELING = 'channeling'
+    CURSE_OF_BINDING = 'curse_of_binding'
+    CURSE_OF_VANISHING = 'curse_of_vanishing'
+    DEPTH_STRIDER = 'depth_strider'
+    EFFICIENCY = 'efficiency'
+    FEATHER_FALLING = 'feather_falling'
+    FIRE_ASPECT = 'fire_aspect'
+    FIRE_PROTECTION = 'fire_protection'
+    FLAME = 'flame'
+    FORTUNE = 'fortune'
+    FROST_WALKER = 'frost_walker'
+    IMPALING = 'impaling'
+    INFINITY = 'infinity'
+    KNOCKBACK = 'knockback'
+    LOOTING = 'looting'
+    LOYALTY = 'loyalty'
+    LUCK_OF_THE_SEA = 'luck_of_the_sea'
+    LURE = 'lure'
+    MENDING = 'mending'
+    MULTISHOT = 'multishot'
+    PIERCING = 'piercing'
+    POWER = 'power'
+    PROJECTILE_PROTECTION = 'projectile_protection'
+    PROTECTION = 'protection'
+    PUNCH = 'punch'
+    QUICK_CHARGE = 'quick_charge'
+    RESPIRATION = 'respiration'
+    RIPTIDE = 'riptide'
+    SHARPNESS = 'sharpness'
+    SILK_TOUCH = 'silk_touch'
+    SMITE = 'smite'
+    SOUL_SPEED = 'soul_speed'
+    SWEEPING_EDGE = 'sweeping_edge'
+    SWIFT_SNEAK = 'swift_sneak'
+    THORNS = 'thorns'
+    UNBREAKING = 'unbreaking'
+
+class Item:
+    def __init__(self, item, nbt):
+        self.item = item
+        self.nbt = nbt
+
+    def __repr__(self):
+        return str(self.item) + '{' + str(self.nbt)[1:-1] + '}'
 
 class Color:
     BLACK = 'black'
@@ -195,7 +130,6 @@ class Color:
 
 class Player:
     EVERYONE      = '@a'
-    EVERYBODY     = '@a'
     MYSELF        = '@s'
     SELF          = '@s'
     RANDOM        = '@r'
@@ -298,9 +232,9 @@ class Function:
 
     def execute_as(self, who):
         if who in Player.player_types:
-            open(self.location + f'/data/{self.datapack.namespace}/functions/{self.filename}.mcfunction', 'a').write(f'execute as {who} at @s run ')
+            open(self.location, 'a').write(f'execute as {who} at @s run ')
         else:
-            open(self.location + f'/data/{self.datapack.namespace}/functions/{self.filename}.mcfunction', 'a').write(f'execute as @e[type={who}] at @s run ')
+            open(self.location, 'a').write(f'execute as @e[type={who}] at @s run ')
 
     def say(self, text): # /say <text>
         open(self.location, 'a').write(f'say {text}\n')
@@ -339,8 +273,8 @@ class Function:
         return f'title {who} actionbar {actionbar}\n'
 
     def clear(self, who): # /title <who> clear
-        open(self.location, 'a').write(f'title {who} clear\n')
-        return f'title {who} clear\n'
+        open(self.location, 'a').write(f'clear {who}\n')
+        return f'clear {who}\n'
 
     def times(self, who, fade_in, stay, fade_out): # /title <who> times <fade_in> <stay> <fade_out>
         open(self.location, 'a').write(f'title {who} times {fade_in} {stay} {fade_out}\n')
@@ -399,3 +333,91 @@ class Command:
 
     def if_score(score, value):
         return f'execute if score @s {score} matches {value} run '
+
+class Enchantments:
+    def __init__(self, enchs_list):
+        self.text = 'Enchantments:['
+        for i, enchs in enumerate(enchs_list):
+            for key in enchs:
+                self.text += '{id:"' + key + '",lvl:' + str(enchs.get(key)) + "}"
+            if i != len(enchs_list)-1:
+                self.text += ','
+        self.text += ']'
+    def __repr__(self):
+        return self.text
+
+class Name:
+    def __init__(self, style):
+        self.text = "display:{Name:'"
+        self.text += str(style).replace("'", '"')
+        self.text = self.text.replace(': True', ': true')
+        self.text = self.text.replace(': False', ': false')
+        self.text += "'}"
+
+    def __repr__(self):
+        return self.text
+
+class EntityTag:
+    def __init__(self, entity):
+        self.text = 'EntityTag:'
+        self.text += str(entity)
+
+    def __repr__(self):
+        return self.text
+
+class NoGravity:
+    def __init__(self, value):
+        self.value = value
+    def __repr__(self):
+        return 'NoGravity:' + str(self.value) + 'b'
+class Invisible:
+    def __init__(self, value):
+        self.value = value
+    def __repr__(self):
+        return 'Invisible:' + str(self.value) + 'b'
+class Marker:
+    def __init__(self, value):
+        self.value = value
+    def __repr__(self):
+        return 'Marker:' + str(self.value) + 'b'
+class Small:
+    def __init__(self, value):
+        self.value = value
+    def __repr__(self):
+        return 'Small:' + str(self.value) + 'b'
+class NoAI:
+    def __init__(self, value):
+        self.value = value
+    def __repr__(self):
+        return 'NoAI:' + str(self.value) + 'b'
+class Silent:
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return 'Silent:' + str(self.value) + 'b'
+class CustomNameVisible:
+    def __init__(self, value):
+        self.value = value
+    def __repr__(self):
+        return 'CustomNameVisible:' + str(self.value) + 'b'
+class EntityId:
+    def __init__(self, entity):
+        self.value = 'id:"' + entity + '"'
+    def __repr__(self):
+        return self.value
+
+class HandItems:
+    def __init__(self, items):
+        self.text = 'HandItems:[{'
+        for i, item in enumerate(items):
+            if item != {}:
+                self.text += to_nbt_item(item) + ''
+            else:
+                self.text += '{}'
+            if i != len(items)-1:
+                self.text += ',{'
+        self.text += ']'
+
+    def __repr__(self):
+        return self.text
