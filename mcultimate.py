@@ -300,7 +300,7 @@ class Function:
         open(self.location, 'a').write('summon ' + entity + ' ' + pos.to_str() + ' ' + nbtdata)
         return 'summon ' + entity + ' ' + pos.to_str() + ' ' + nbtdata
     
-    def if_score(score, value):
+    def if_score(self, score, value):
         open(self.location, 'a').write(f'execute if score @s {score} matches {value} run ')
 
 class Command:
