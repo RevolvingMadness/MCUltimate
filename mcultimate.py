@@ -2,6 +2,7 @@ import os
 import shutil
 from mcfuncs import *
 
+######################## DATAPACKS ########################
 
 class Trigger:
     def __init__(self, datapack, name, on_trigger):
@@ -611,3 +612,35 @@ class Entity:
 
     def __repr__(self):
         return self.text
+
+
+
+######################## RESOURCE PACKS ########################
+
+class Resourcepack:
+    def __init__(self, path, textures_location):
+        self.name = path.split('/')[-1]
+        self.tloc = textures_location
+        self.path = path
+        try:
+            os.mkdir(path)
+        except:
+            shutil.rmtree(path)
+            os.mkdir(path)
+        open(path + '/pack.mcmeta', 'w').writelines('''{
+    "pack": {
+        "pack_format": 9,
+        "description": "Minecraft's Default Textures Packed for Texture Makers!"
+    }
+}''')
+        os.mkdir(path + '/assets/')
+        os.mkdir(path + '/assets/minecraft')
+        os.mkdir(path + '/assets/minecraft/textures')
+        os.mkdir(path + '/assets/minecraft/textures/block')
+        os.mkdir(path + '/assets/minecraft/textures/item')
+    
+    def replace_block_texture(self, block, texture):
+        shutil.copyfile(self.tloc + "/" + texture, self.path + "/assets/minecraft/textures/block/" + block + ".png")
+    
+    def replace_item_texture(self, item, texture):
+        shutil.copyfile(self.tloc + "/" + texture, self.path + "/assets/minecraft/textures/item/" + item + ".png")
