@@ -225,13 +225,9 @@ class Datapack:
         return object
 
     def add_trigger(self, name, on_trigger):
-        open(self.location + f'/data/{self.namespace}/functions/load.mcfunction',
-             'a').write('scoreboard objectives add givedia trigger\n')
-        open(self.location + f'/data/{self.namespace}/functions/tick.mcfunction', 'a').write(
-            f'execute as @a at @s run execute if score @s {name} matches 1.. run function {self.namespace}:{on_trigger.filename}\n')
-        open(self.location + f'/data/{self.namespace}/functions/tick.mcfunction',
-             'a').write(f'scoreboard players set @a {name} 0\n')
-        return Trigger(self, name, on_trigger)
+        open(self.loadfunc, 'a').write(f'scoreboard objectives add {name} trigger\n')
+        open(self.tickfunc, 'a').write(f'execute as @a at @s run execute if score @s {name} matches 1.. run {on_trigger}\n')
+        open(self.tickfunc, 'a').write(f'scoreboard players set @a {name} 0\n')
 
     def gamerule(self, rule, val):
         open(self.loadfunc, 'a').write(f'gamerule {rule} {str(val).lower()}\n')
@@ -289,8 +285,7 @@ class Function:
         open(self.location, 'a').write(f'give {who} {item} {str(count)}\n')
 
     def enable(self, trigger, who):  # /scoreboard players enable <who> <trigger>
-        open(self.location, 'a').write(
-            f'scoreboard players enable {who} {trigger.name}\n')
+        open(self.location, 'a').write(f'scoreboard players enable {who} {trigger}\n')
 
     def tellraw(self, who, text):  # /tellraw <who> <text>
         text = str(text).replace('\'', '"').replace('\n', '')
@@ -344,7 +339,7 @@ class Command:
         return f'say {text}'
 
     def give(item, who='@s', count=1):  # /give <who> <item> <count>
-        return f'give {who} {item} {str(count)}\n'
+        return f'give {who} {item.to_give()} {str(count)}\n'
 
     def enable(trigger, who):  # /scoreboard players enable <who> <trigger>
         return f'scoreboard players enable {who} {trigger.name}\n'
@@ -676,10 +671,18 @@ class Scores:
     def __repr__(self):
         return self.text
 
+class CustomModelData:
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return 'CustomModelData:' + str(self.value)
+
 ######################## RESOURCE PACKS ########################
 
 class Resourcepack:
-    def __init__(self, path, textures_location):
+    def __init__(self, datapack, path, textures_location):
+        self.datapack = datapack
         self.name = path.split('/')[-1]
         self.tloc = textures_location
         self.path = path
@@ -712,13 +715,19 @@ class Resourcepack:
     def replace_item_texture(self, item, texture):
         shutil.copyfile(self.tloc + "/" + texture, self.path + "/assets/minecraft/textures/item/" + item + ".png")
     
-    '''Cool Doc'''
     def add_custom_item(self, item_display_name, texture, replace_item, custom_model_data, create_trigger_for_item):
         self.item_display_name = item_display_name
         self.texture = texture
         self.replace_item = replace_item
         self.cmdata = custom_model_data
         self.hastrigger = create_trigger_for_item
+        tickfunc = Function(self.datapack, 'tick')
+        if self.hastrigger:
+            self.datapack.add_trigger('give_' + self.texture.replace('.png', ''), Command.give(Item(replace_item, [
+                'display:{Name:\'' + str(self.item_display_name).replace("'", '"') + '\'}',
+                CustomModelData(self.cmdata)
+            ]), MYSELF))
+            tickfunc.enable("give_" + self.texture.replace('.png', ''), Player.EVERYONE)
         self.mjson = self.path + "/assets/minecraft/models/item/" + self.replace_item + ".json"
 
         shutil.copyfile(self.tloc + "/" + texture, self.path + "/assets/minecraft/textures/item/" + texture)

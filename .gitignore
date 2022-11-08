@@ -2,4 +2,6 @@
 .obsidian/
 __pycache__/
 main.py
-custom_textures/
+dpack/
+rpack/
+rpack_textures/
