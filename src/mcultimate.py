@@ -683,6 +683,7 @@ class CustomModelData:
 class Resourcepack:
     def __init__(self, datapack, path, textures_location):
         self.datapack = datapack
+        self.tickfunc = Function(self.datapack, 'tick')
         self.name = path.split('/')[-1]
         self.tloc = textures_location
         self.path = path
@@ -724,13 +725,12 @@ class Resourcepack:
         self.cmdata = custom_model_data
         self.hastrigger = create_trigger_for_item
         texture_json = self.path + "/assets/minecraft/models/item/" + texture.replace('.png', '.json')
-        tickfunc = Function(self.datapack, 'tick')
-        if self.hastrigger:
+        if create_trigger_for_item:
             self.datapack.add_trigger('give_' + self.texture.replace('.png', ''), Command.give(Item(replace_item, [
                 'display:{Name:\'' + str(self.item_display_name).replace("'", '"') + '\'}',
                 CustomModelData(self.cmdata)
             ]), MYSELF))
-            tickfunc.enable("give_" + self.texture.replace('.png', ''), Player.EVERYONE)
+            self.tickfunc.enable("give_" + self.texture.replace('.png', ''), Player.EVERYONE)
         self.mjson = self.path + "/assets/minecraft/models/item/" + self.replace_item + ".json"
 
         shutil.copyfile(self.tloc + "/" + texture, self.path + "/assets/minecraft/textures/item/" + texture)
