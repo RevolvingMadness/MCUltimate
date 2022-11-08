@@ -10,5 +10,9 @@ def to_nbt_item(item, count, nbts=[]):
     text += '}}'
 
 def insert_to_file(file, index, text):
-    content = open(file, 'r').read()
+    try:
+        content = open(file, 'r').read()
+    except:
+        open(file, 'w').write('')
+        content = ''
     open(file, 'w').write(content[:index] + text + content[index:])

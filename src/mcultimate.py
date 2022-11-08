@@ -688,7 +688,9 @@ class Resourcepack:
         self.path = path
         self.windex = 101
         self.done_creating = 0
-        self.writes = 0
+        self.writes = [
+
+        ]
         try:
             os.mkdir(path)
         except:
@@ -721,6 +723,7 @@ class Resourcepack:
         self.replace_item = replace_item
         self.cmdata = custom_model_data
         self.hastrigger = create_trigger_for_item
+        texture_json = self.path + "/assets/minecraft/models/item/" + texture.replace('.png', '.json')
         tickfunc = Function(self.datapack, 'tick')
         if self.hastrigger:
             self.datapack.add_trigger('give_' + self.texture.replace('.png', ''), Command.give(Item(replace_item, [
@@ -731,28 +734,37 @@ class Resourcepack:
         self.mjson = self.path + "/assets/minecraft/models/item/" + self.replace_item + ".json"
 
         shutil.copyfile(self.tloc + "/" + texture, self.path + "/assets/minecraft/textures/item/" + texture)
-        open(self.path + "/assets/minecraft/models/item/" + texture.replace('.png', '.json'), 'w').write(('{\n'
+        open(texture_json, 'w').write(('{\n'
     '    "parent": "item/handheld",\n'
     '    "textures": {\n'
 f'        "layer0": "item/' + texture.replace('.png', '') + '"\n'
     '    }\n'
     '}\n'))
-        if not self.done_creating:
-            open(self.path + "/assets/minecraft/models/item/" + self.replace_item + ".json", 'w').write(('{\n'
-    '	"parent": "item/generated",\n'
-    '	"textures": {\n'
-    f'		"layer0": "item/{self.replace_item}"\n'
-    '	},\n'
-    '	\n'
-    '	"overrides": [\n\n'
-    '	]\n'
-    '}\n'))
-            self.done_creating = 1
+        if self.replace_item not in self.writes:
+            open(self.mjson, 'w').write(('{\n'
+            '	"parent": "item/generated",\n'
+            '	"textures": {\n'
+            f'		"layer0": "item/{self.replace_item}"\n'
+            '	},\n'
+            '	\n'
+            '	"overrides": [\n'
+            '\t\t\n'
+            '	]\n'
+            '}\n'))
+
+        content = open(self.mjson, 'r').read()
+        open(self.mjson, 'w').write(content[:-6])
+
+        no_png_texture = texture.replace('.png', '')
+        text = '{"predicate": {"custom_model_data":' + str(self.cmdata) + '}, "model": "item/' + no_png_texture + '"}'
+
+        already_been_in_file = 0
+        if self.replace_item in self.writes:
+            already_been_in_file = 1
         
-        insert_to_file(self.mjson, self.windex, '\t\t{"predicate": {"custom_model_data":' + str(self.cmdata) + '}, "model": "item/' + self.texture.replace('.png', '') + '"}\n')
-        if self.writes > 0:
-            insert_to_file(self.mjson, self.windex-1, ',')
+        if already_been_in_file:
+            text = ',\n\t\t' + text
         else:
-            self.windex -= 1
-        self.writes += 1
-        self.windex += len('\t\t{"predicate": {"custom_model_data":' + str(self.cmdata) + '}, "model": "item/' + self.texture.replace('.png', '') + '"}')+2
+            self.writes.append(self.replace_item)
+
+        open(self.mjson, 'a').write(text + '\n\t]\n}\n')
