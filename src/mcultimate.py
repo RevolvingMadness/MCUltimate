@@ -160,7 +160,7 @@ class Player:
         return self.text
 
 
-class ArmorItems:
+class ArmorItems:  # type: ignore
     def __init__(self, head='air', chestplate='air', leggings='air', boots='air'):
         self.head = head
         self.chestplate = chestplate
@@ -180,6 +180,8 @@ class Datapack:
         self.namespace = namespace.lower()
         self.custom_items = []
         self.desc = desc
+        self.rtickfunc = Function(self, 'tick')
+        self.rloadfunc = Function(self, 'load')
         self.tickfunc = self.location + \
             f'/data/{self.namespace}/functions/tick.mcfunction'
         self.loadfunc = self.location + \
@@ -225,43 +227,19 @@ class Datapack:
             f'scoreboard objectives add {object.name} {object.criteria}\n')
         return object
 
-    def add_trigger(self, name, on_trigger):
-        open(self.loadfunc, 'a').write(
-            f'scoreboard objectives add {name} trigger\n')
-        open(self.tickfunc, 'a').write(
-            f'execute as @a at @s run execute if score @s {name} matches 1.. run {on_trigger}\n')
-        open(self.tickfunc, 'a').write(f'scoreboard players set @a {name} 0\n')
-
     def gamerule(self, rule, val):
         open(self.loadfunc, 'a').write(f'gamerule {rule} {str(val).lower()}\n')
 
 
 class Function:
-    def __init__(self, datapack, type='func'):
+    def __init__(self, datapack, name):
         self.location = ''
-        self.filename = ''
+        self.filename = name
         self.datapack = datapack
-        if type in ['main', 'tick']:
-            open(datapack.location +
-                 f'/data/{datapack.namespace}/functions/tick.mcfunction', 'w').write('')
-            self.location = datapack.location + \
-                f'/data/{datapack.namespace}/functions/tick.mcfunction'
-            self.filename = 'tick'
-
-        if type == 'load':
-            open(datapack.location +
-                 f'/data/{datapack.namespace}/functions/load.mcfunction', 'w').write('')
-            self.location = datapack.location + \
-                f'/data/{datapack.namespace}/functions/load.mcfunction'
-            self.filename = 'load'
-
-        if type == 'func':
-            open(datapack.location +
-                 f'/data/{datapack.namespace}/functions/function{str(datapack.function_num)}.mcfunction', 'w').write('')
-            self.location = datapack.location + \
-                f'/data/{datapack.namespace}/functions/function{str(datapack.function_num)}.mcfunction'
-            self.filename = f'function{str(datapack.function_num)}'
-            datapack.function_num += 1
+        open(datapack.location +
+                f'/data/{datapack.namespace}/functions/{self.filename}.mcfunction', 'w').write('')
+        self.location = datapack.location + \
+            f'/data/{datapack.namespace}/functions/{self.filename}.mcfunction'
 
     def fill(self, from_, to, block, replace=None):
         self.text = f'fill {from_} {to} {block}'
@@ -271,7 +249,14 @@ class Function:
 
     def function(self, func):
         open(self.location, 'a').write(
-            f'function {self.datapack.namespace}:{func.filename}')
+            f'function {self.datapack.namespace}:{func.filename}\n')
+
+    def add_trigger(self, name, on_trigger):
+        open(self.datapack.loadfunc, 'a').write(
+            f'scoreboard objectives add {name} trigger\n')
+        open(self.location, 'a').write(
+            f'execute as @a at @s run execute if score @s {name} matches 1.. run {on_trigger}\n')
+        open(self.location, 'a').write(f'scoreboard players set @a {name} 0\n')
 
     def execute_as(self, who):
         open(self.location, 'a').write(f'execute as {who} at @s run ')
@@ -343,10 +328,10 @@ class Command:
         return f'say {text}'
 
     def give(item, who='@s', count=1):  # /give <who> <item> <count>
-        return f'give {who} {item.to_give()} {str(count)}\n'
+        return f'give {who} {item.to_give()} {str(count)}\n'  # type: ignore
 
     def enable(trigger, who):  # /scoreboard players enable <who> <trigger>
-        return f'scoreboard players enable {who} {trigger.name}\n'
+        return f'scoreboard players enable {who} {trigger.name}\n'  # type: ignore
 
     def tellraw(text, who):  # /tellraw <who> <text>
         text = str(text).replace('\'', '"').replace('\n', '')
@@ -364,7 +349,7 @@ class Command:
             if i != len(nbt)-1:
                 nbtdata += ', '
         nbtdata += '}'
-        return 'summon ' + entity + ' ' + pos.to_str() + ' ' + nbtdata
+        return 'summon ' + entity + ' ' + pos.to_str() + ' ' + nbtdata  # type: ignore
 
     def if_score(score, value):
         return f'execute if score @s {score} matches {value} run '
@@ -396,11 +381,16 @@ class Name:
 
 
 class EntityTag:
-    def __init__(self, entity):
+    def __init__(self, nbts):
         self.text = 'EntityTag:{'
-        if type(entity) == Item:
-            entity = entity.to_entity()
-        self.text += str(entity)
+        for i, nbt in enumerate(nbts):
+            if type(nbt) == Item:
+                nbt = nbt.to_entity()
+            if type(nbt) == Tags:
+                nbt = nbt.normal()
+            self.text += str(nbt)
+            if i != len(nbts)-1:
+                self.text += ','
         self.text += '}'
 
     def __repr__(self):
@@ -484,7 +474,7 @@ class HandItems:
         self.text = 'HandItems:[{'
         for i, item in enumerate(items):
             if item != {}:
-                self.text += to_nbt_item(item) + ''
+                self.text += to_nbt_item(item) + ''  # type: ignore
             else:
                 self.text += '{}'
             if i != len(items)-1:
@@ -511,7 +501,7 @@ class ArmorItems:
             if item == {}:
                 self.text += '{}'
             else:
-                self.text += '{' + to_nbt_item(str(item))[:-1] + '}'
+                self.text += '{' + to_nbt_item(str(item))[:-1] + '}'  # type: ignore
             if i != len(armor)-1:
                 self.text += ','
         self.text += ']'
@@ -602,6 +592,8 @@ class Item:
     def to_give(self):
         self.text = self.item + '{'
         for i, tag in enumerate(self.nbt):
+            if type(tag) == Tags:
+                tag = tag.normal()
             self.text += str(tag)
             if i != len(self.nbt)-1:
                 self.text += ','
@@ -620,7 +612,6 @@ class Item:
             result += '}'
 
         result += '}'
-        print(result)
         return result
 
 
@@ -704,6 +695,7 @@ class Resourcepack:
         self.path = path
         self.windex = 101
         self.done_creating = 0
+        self.current_custom_block = 1
         self.writes = [
 
         ]
@@ -734,79 +726,132 @@ class Resourcepack:
     def replace_item_texture(self, item, texture):
         shutil.copyfile(self.tloc + "/" + texture, self.path +
                         "/assets/minecraft/textures/item/" + item + ".png")
-
-    def add_custom_item(self, item_display_name, texture, replace_item, custom_model_data, create_trigger_for_item):
-        self.item_display_name = item_display_name
-        self.texture = texture
-        self.replace_item = replace_item
-        self.cmdata = custom_model_data
-        self.hastrigger = create_trigger_for_item
-        texture_json = self.path + "/assets/minecraft/models/item/" + \
-            texture.replace('.png', '.json')
-        if create_trigger_for_item:
-            self.datapack.add_trigger('give_' + self.texture.replace('.png', ''), Command.give(Item(replace_item, [
-                'display:{Name:\'' +
-                str(self.item_display_name).replace("'", '"') + '\'}',
-                CustomModelData(self.cmdata)
-            ]), MYSELF))
-            self.tickfunc.enable(
-                "give_" + self.texture.replace('.png', ''), Player.EVERYONE)
-        self.mjson = self.path + "/assets/minecraft/models/item/" + \
-            self.replace_item + ".json"
-
-        shutil.copyfile(self.tloc + "/" + texture, self.path +
-                        "/assets/minecraft/textures/item/" + texture)
-        open(texture_json, 'w').write(('{\n'
-                                       '    "parent": "item/handheld",\n'
-                                       '    "textures": {\n'
-                                       f'        "layer0": "item/' +
-                                       texture.replace('.png', '') + '"\n'
-                                       '    }\n'
-                                       '}\n'))
-        if self.replace_item not in self.writes:
-            open(self.mjson, 'w').write(('{\n'
+    
+    def append_custom_model(self, filepath, text, in_writes):
+        try:
+            content = open(filepath, 'r').read()
+        except FileNotFoundError:
+            open(filepath, 'w').write(('{\n'
                                          '	"parent": "item/generated",\n'
                                          '	"textures": {\n'
-                                         f'		"layer0": "item/{self.replace_item}"\n'
+                                         f'		"layer0": "item/{in_writes}"\n'
                                          '	},\n'
                                          '	\n'
                                          '	"overrides": [\n'
                                          '\t\t\n'
                                          '	]\n'
                                          '}\n'))
-
-        content = open(self.mjson, 'r').read()
-        open(self.mjson, 'w').write(content[:-6])
-
-        no_png_texture = texture.replace('.png', '')
-        text = '{"predicate": {"custom_model_data":' + \
-            str(self.cmdata) + '}, "model": "item/' + no_png_texture + '"}'
+            content = open(filepath, 'r').read()
+        open(filepath, 'w').write(content[:-6])
 
         already_been_in_file = 0
-        if self.replace_item in self.writes:
+        if in_writes in self.writes:
             already_been_in_file = 1
 
         if already_been_in_file:
             text = ',\n\t\t' + text
         else:
-            self.writes.append(self.replace_item)
+            self.writes.append(in_writes)
 
-        open(self.mjson, 'a').write(text + '\n\t]\n}\n')
+        open(filepath, 'a').write(text + '\n\t]\n}\n')
 
-    def add_custom_block(self, block_display_name, texture, base_block, create_trigger_for_block):
-        if create_trigger_for_block:
-            self.datapack.add_trigger('give_' + texture.replace('.png', ''), Command.give(Item(GLOW_ITEM_FRAME, [
+    def add_custom_item(self, item_display_name, texture, replace_item, custom_model_data, create_trigger_for_item):
+        no_png_texture = texture.replace('.png', '')
+        texture_json = self.path + "/assets/minecraft/models/item/" + \
+            texture.replace('.png', '.json')
+        if create_trigger_for_item:
+            give_item_trigger = Function(self.datapack, 'give_' + no_png_texture)
+            self.datapack.rtickfunc.function(give_item_trigger)
+            give_item_trigger.add_trigger('give_' + texture.replace('.png', ''), Command.give(Item(replace_item, [
                 'display:{Name:\'' +
-                str(block_display_name).replace("'", '"') + '\'}',
-                EntityTag(Item(BARRIER, [
-                    CustomModelData(1)
-                ]))
-            ]), MYSELF))
+                str(item_display_name).replace("'", '"') + '\'}',
+                CustomModelData(custom_model_data)
+            ]), MYSELF))  # type: ignore
             self.tickfunc.enable(
                 "give_" + texture.replace('.png', ''), Player.EVERYONE)
+        mjson = self.path + "/assets/minecraft/models/item/" + \
+            replace_item + ".json"
 
-    def add_custom_item_model(self, item_display_name, model, replace_item, custom_model_data, create_trigger_for_item):
-        shutil.copyfile(self.tloc + "/" + model, self.path + "/assets/minecraft/models/item/" + model)
+        shutil.copyfile(self.tloc + "/" + texture, self.path +
+                        "/assets/minecraft/textures/item/" + texture)
+        open(texture_json, 'w').write(('{\n'
+                                       '    "parent": "item/handheld",\n'
+                                       '    "textures": {\n'
+                                       f'        "layer0": "item/' + texture.replace('.png', '') + '"\n'
+                                       '    }\n'
+                                       '}\n'))
+        text = '{"predicate": {"custom_model_data":' + \
+            str(custom_model_data) + '}, "model": "item/' + no_png_texture + '"}'
+        self.append_custom_model(mjson, text, replace_item)
+
+    def add_custom_block(self, block_display_name, texture, base_block, create_trigger_for_block):
+        no_png_texture = texture.replace('.png', '')
+        if create_trigger_for_block:
+            give_block_trigger = Function(self.datapack, no_png_texture)
+            self.datapack.rtickfunc.function(give_block_trigger)
+            give_block_trigger.add_trigger('give_' + no_png_texture, Command.
+            give(Item(GLOW_ITEM_FRAME, [
+                'display:{Name:\'' +
+                str(block_display_name).replace("'", '"') + '\'}',
+                EntityTag([
+                    Item(BARRIER, [
+                        CustomModelData(self.current_custom_block)
+                    ]),
+                    Tags([
+                        "hi"
+                    ])
+                ])
+            ]), MYSELF))  # type: ignore
+            self.tickfunc.enable(
+                "give_" + no_png_texture, Player.EVERYONE)
+        open(self.path + '/assets/minecraft/models/item/' + no_png_texture + '.json', 'w').write(('{\n'
+'	"credit": "Made with MCUltimate",\n'
+'	"textures": {\n'
+f'		"0": "block/{no_png_texture}",\n'
+f'		"particle": "block/{no_png_texture}"\n'
+'	},\n'
+'	"elements": [\n'
+'		{\n'
+'			"from": [0, 0, 0],\n'
+'			"to": [16, 16, 16],\n'
+'			"faces": {\n'
+'				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+'				"east": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+'				"south": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+'				"west": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+'				"up": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+'				"down": {"uv": [0, 0, 16, 16], "texture": "#0"}\n'
+'			}\n'
+'		}\n'
+'	],\n'
+'	"display": {\n'
+'		"thirdperson_righthand": {\n'
+'			"rotation": [-25, 0, -43.51],\n'
+'			"translation": [0, 2.75, 0],\n'
+'			"scale": [0.38, 0.38, 0.38]\n'
+'		},\n'
+'		"fixed": {\n'
+'			"translation": [0, 0, -14],\n'
+'			"scale": [2.001, 2.001, 2.001]\n'
+'		}\n'
+'	}\n'
+'}'))
+        shutil.copyfile(self.tloc + '/' + texture, self.path + '/assets/minecraft/textures/block/' + texture)
+        if 'barrier' not in self.writes:
+            open(self.path + '/assets/minecraft/models/item/barrier.json', 'w').write(('{\n'
+                                         '	"parent": "item/generated",\n'
+                                         '	"textures": {\n'
+                                         f'		"layer0": "item/barrier"\n'
+                                         '	},\n'
+                                         '	\n'
+                                         '	"overrides": [\n'
+                                         '\t\t\n'
+                                         '	]\n'
+                                         '}\n'))
+        self.append_custom_model(self.path + '/assets/minecraft/models/item/barrier.json', '{"predicate": {"custom_model_data":' + \
+            str(self.current_custom_block) + '}, "model": "item/' + no_png_texture + '"}', 'barrier')
+        self.writes.append('barrier')
+        self.current_custom_block += 1
 
     def add_custom_gui(self, gui_layout):
         open_slots = []
@@ -814,8 +859,7 @@ class Resourcepack:
         for slot in gui_layout:
             placeholder_slots.remove(slot.slot)
             open_slots.append(slot.slot)
-        print(open_slots)
-        open(self.tickfunc, 'a').write()
+        open(self.tickfunc, 'a').write()  # type: ignore
 
 class InputSlot:
     def __init__(self, slot):
