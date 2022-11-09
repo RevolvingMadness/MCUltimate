@@ -255,7 +255,7 @@ class Function:
         open(self.datapack.loadfunc, 'a').write(
             f'scoreboard objectives add {name} trigger\n')
         open(self.location, 'a').write(
-            f'execute as @a at @s run execute if score @s {name} matches 1.. run {on_trigger}\n')
+            f'execute as @a at @s run execute if score @s {name} matches 1.. run {on_trigger}')
         open(self.location, 'a').write(f'scoreboard players set @a {name} 0\n')
 
     def execute_as(self, who):
