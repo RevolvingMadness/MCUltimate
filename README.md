@@ -106,3 +106,7 @@ tick.tellraw(Player.EVERYONE, [{
 from mcultimate import *
 ```
 4. Once you have typed your code just run `$ python main.py` and enjoy!
+
+# Releases
+
+I will try my best to release a new version every week. If I do release a new version, it will be on Friday and If I cant release a new version I will try to release as soon as possible
