@@ -94,7 +94,7 @@ tick.tellraw(Player.EVERYONE, [{
 ```
 </details>
 
-# Installation
+## Installation
 
 1. Download these three files and put them in the same folder
     `a. mcultimate.py`
@@ -107,6 +107,6 @@ from mcultimate import *
 ```
 4. Once you have typed your code just run `$ python main.py` and enjoy!
 
-# Releases
+## Releases
 
 I will try my best to release a new version every week. If I do release a new version, it will be on Friday and If I cant release a new version I will try to release as soon as possible
