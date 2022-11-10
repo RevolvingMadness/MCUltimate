@@ -180,8 +180,6 @@ class Datapack:
         self.namespace = namespace.lower()
         self.custom_items = []
         self.desc = desc
-        self.rtickfunc = Function(self, 'tick')
-        self.rloadfunc = Function(self, 'load')
         self.tickfunc = self.location + \
             f'/data/{self.namespace}/functions/tick.mcfunction'
         self.loadfunc = self.location + \
@@ -218,6 +216,8 @@ class Datapack:
         os.mkdir(self.location + f'/data/{self.namespace}')
         os.mkdir(self.location + f'/data/{self.namespace}/functions')
         self.function_num = 1
+        self.rtickfunc = Function(self, 'tick')
+        self.rloadfunc = Function(self, 'load')
 
     def add_scoreboard(self, object):
         object.datapack = self
@@ -250,7 +250,7 @@ class Function:
             self.location += '/'
         self.location += f'{self.filename}.mcfunction'
         self.base_location += f'{self.filename}'
-        open(f'{self.location}', 'w').write('')
+        open(self.location, 'w').write('')
 
     def fill(self, from_, to, block, replace=None):
         self.text = f'fill {from_} {to} {block}'
@@ -845,7 +845,11 @@ class CustomBlock:
         self.create_trigger_for_block = create_trigger_for_block
         self.texture = texture
         self.base_block = base_block
-        if '.png' in texture:
+        if type(texture) == SidedTextures:
+            texture = texture.to_custom_block()
+            open(self.resourcepack.path + '/assets/minecraft/models/item/' + get_json_item_name(block_display_name) + '.json', 'w').write(texture)
+            self.resourcepack.append_custom_model(self.resourcepack.path + '/assets/minecraft/models/item/glow_item_frame.json', '{"predicate": {"custom_model_data":' + str(self.resourcepack.current_custom_block) + '}, "model": "item/' + get_json_item_name(block_display_name) + '"}', 'glow_item_frame')
+        elif '.png' in texture:
             self.no_png_texture = texture.replace('.png', '')
             self.png_texture()
         else:
@@ -896,59 +900,59 @@ class CustomBlock:
             self.datapack.rtickfunc.enable(
                 "give_" + self.no_png_texture, Player.EVERYONE)
         open(self.resourcepack.path + '/assets/minecraft/models/item/' + self.no_png_texture + '.json', 'w').write(('{\n'
-                                                                                                                    '	"credit": "Made with MCUltimate",\n'
-                                                                                                                    '	"textures": {\n'
-                                                                                                                    f'		"0": "block/{self.no_png_texture}",\n'
-                                                                                                                    f'		"particle": "block/{self.no_png_texture}"\n'
-                                                                                                                    '	},\n'
-                                                                                                                    '	"elements": [\n'
-                                                                                                                    '		{\n'
-                                                                                                                    '			"from": [0, 0, 0],\n'
-                                                                                                                    '			"to": [16, 16, 16],\n'
-                                                                                                                    '			"faces": {\n'
-                                                                                                                    '				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
-                                                                                                                    '				"east": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
-                                                                                                                    '				"south": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
-                                                                                                                    '				"west": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
-                                                                                                                    '				"up": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
-                                                                                                                    '				"down": {"uv": [0, 0, 16, 16], "texture": "#0"}\n'
-                                                                                                                    '			}\n'
-                                                                                                                    '		}\n'
-                                                                                                                    '	],\n'
-                                                                                                                    '	"display": {\n'
-                                                                                                                    '       "thirdperson_righthand": {\n'
-                                                                                                                    '           "rotation": [-25, 0, -43.51],\n'
-                                                                                                                    '           "translation": [0, 2.75, 0],\n'
-                                                                                                                    '           "scale": [0.38, 0.38, 0.38]\n'
-                                                                                                                    '       },\n'
-                                                                                                                    '       "firstperson_righthand": {\n'
-                                                                                                                    '           "rotation": [-2.9, 50.24, -2.92],\n'
-                                                                                                                    '           "translation": [-0.75, 0.75, 2],\n'
-                                                                                                                    '           "scale": [0.4, 0.4, 0.4]\n'
-                                                                                                                    '       },\n'
-                                                                                                                    '       "firstperson_lefthand": {\n'
-                                                                                                                    '           "rotation": [-2.9, 50.24, -2.92],\n'
-                                                                                                                    '           "translation": [-0.75, 0.75, 2],\n'
-                                                                                                                    '           "scale": [0.4, 0.4, 0.4]\n'
-                                                                                                                    '       },\n'
-                                                                                                                    '       "gui": {\n'
-                                                                                                                    '           "rotation": [24.25, -47, 0],\n'
-                                                                                                                    '           "translation": [0, 0.25, 0],\n'
-                                                                                                                    '           "scale": [0.67, 0.67, 0.67]\n'
-                                                                                                                    '       },\n'
-                                                                                                                    '       "ground": {\n'
-                                                                                                                    '           "scale": [0.25, 0.25, 0.25],\n'
-                                                                                                                    '           "translation": [0, 2.5, 0]\n'
-                                                                                                                    '		},\n'
-                                                                                                                    '       "head": {\n'
-                                                                                                                    '			"scale": [0.801, 0.80295, 0.801]\n'
-                                                                                                                    '		},\n'
-                                                                                                                    '		"fixed": {\n'
-                                                                                                                    '			"translation": [0, 0, -14],\n'
-                                                                                                                    '			"scale": [2.001, 2.001, 2.001]\n'
-                                                                                                                    '		}\n'
-                                                                                                                    '	}\n'
-                                                                                                                    '}'))
+                                                '	"credit": "Made with MCUltimate",\n'
+                                                '	"textures": {\n'
+                                                f'		"0": "block/{self.no_png_texture}",\n'
+                                                f'		"particle": "block/{self.no_png_texture}"\n'
+                                                '	},\n'
+                                                '	"elements": [\n'
+                                                '		{\n'
+                                                '			"from": [0, 0, 0],\n'
+                                                '			"to": [16, 16, 16],\n'
+                                                '			"faces": {\n'
+                                                '				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+                                                '				"east": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+                                                '				"south": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+                                                '				"west": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+                                                '				"up": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+                                                '				"down": {"uv": [0, 0, 16, 16], "texture": "#0"}\n'
+                                                '			}\n'
+                                                '		}\n'
+                                                '	],\n'
+'	"display": {\n'
+'       "thirdperson_righthand": {\n'
+'           "rotation": [-25, 0, -43.51],\n'
+'           "translation": [0, 2.75, 0],\n'
+'           "scale": [0.38, 0.38, 0.38]\n'
+'       },\n'
+'       "firstperson_righthand": {\n'
+'           "rotation": [-2.9, 50.24, -2.92],\n'
+'           "translation": [-0.75, 0.75, 2],\n'
+'           "scale": [0.4, 0.4, 0.4]\n'
+'       },\n'
+'       "firstperson_lefthand": {\n'
+'           "rotation": [-2.9, 50.24, -2.92],\n'
+'           "translation": [-0.75, 0.75, 2],\n'
+'           "scale": [0.4, 0.4, 0.4]\n'
+'       },\n'
+'       "gui": {\n'
+'           "rotation": [24.25, -47, 0],\n'
+'           "translation": [0, 0.25, 0],\n'
+'           "scale": [0.67, 0.67, 0.67]\n'
+'       },\n'
+'       "ground": {\n'
+'           "scale": [0.25, 0.25, 0.25],\n'
+'           "translation": [0, 2.5, 0]\n'
+'		},\n'
+'       "head": {\n'
+'			"scale": [0.801, 0.80295, 0.801]\n'
+'		},\n'
+'		"fixed": {\n'
+'			"translation": [0, 0, -14],\n'
+'			"scale": [2.001, 2.001, 2.001]\n'
+'		}\n'
+'	}\n'
+'}'))
         shutil.copyfile(self.resourcepack.tloc + '/' + self.texture,
                         self.resourcepack.path + '/assets/minecraft/textures/block/' + self.texture)
         if 'glow_item_frame' not in self.resourcepack.writes:
@@ -1040,3 +1044,91 @@ class CustomBlock:
             text += f'function {self.datapack.namespace}:{on_place.base_location}\n'
         content = open(self.place.location, 'r').read()
         open(self.place.location, 'w').write(text + content)
+
+
+class SidedTextures:
+    def __init__(self, top, bottom, left, right, front, back, datapack, resourcepack):
+        self.top = top
+        self.bottom = bottom
+        self.left = left
+        self.right = right
+        self.front = front
+        self.back = back
+        self.datapack = datapack
+        self.resourcepack = resourcepack
+
+    def to_custom_block(self):
+        no_png_top = self.top.replace('.png', '')
+        no_png_bottom = self.bottom.replace('.png', '')
+        no_png_left = self.left.replace('.png', '')
+        no_png_right = self.right.replace('.png', '')
+        no_png_front = self.front.replace('.png', '')
+        no_png_back = self.back.replace('.png', '')
+        shutil.copyfile(self.resourcepack.tloc + '/' + self.top, self.resourcepack.path + '/assets/minecraft/textures/block/' + self.top)
+        shutil.copyfile(self.resourcepack.tloc + '/' + self.bottom, self.resourcepack.path + '/assets/minecraft/textures/block/' + self.bottom)
+        shutil.copyfile(self.resourcepack.tloc + '/' + self.left, self.resourcepack.path + '/assets/minecraft/textures/block/' + self.left)
+        shutil.copyfile(self.resourcepack.tloc + '/' + self.right, self.resourcepack.path + '/assets/minecraft/textures/block/' + self.right)
+        shutil.copyfile(self.resourcepack.tloc + '/' + self.front, self.resourcepack.path + '/assets/minecraft/textures/block/' + self.front)
+        shutil.copyfile(self.resourcepack.tloc + '/' + self.back, self.resourcepack.path + '/assets/minecraft/textures/block/' + self.back)
+
+        text = ('{\n'
+'	"credit": "Made with MCUltimate",\n'
+'	"textures": {\n'
+f'		"0": "block/{no_png_bottom}",\n'
+f'		"1": "block/{no_png_front}",\n'
+f'		"2": "block/{no_png_top}",\n'
+f'		"3": "block/{no_png_right}",\n'
+f'       "4": "block/{no_png_left}",\n'
+f'       "5": "block/{no_png_back}",\n'
+f'		"particle": "block/{no_png_bottom}"\n'
+'	},\n'
+'	"elements": [\n'
+'		{\n'
+'			"from": [0, 0, 0],\n'
+'			"to": [16, 16, 16],\n'
+'			"faces": {\n'
+'				"north": {"uv": [0, 0, 16, 16], "texture": "#3"},\n'
+'				"east": {"uv": [0, 0, 16, 16], "texture": "#1"},\n'
+'				"south": {"uv": [0, 0, 16, 16], "texture": "#4"},\n'
+'				"west": {"uv": [0, 0, 16, 16], "texture": "#5"},\n'
+'				"up": {"uv": [0, 0, 16, 16], "texture": "#2"},\n'
+'				"down": {"uv": [0, 0, 16, 16], "texture": "#0"}\n'
+'			}\n'
+'		}\n'
+'	],\n'
+'	"display": {\n'
+'       "thirdperson_righthand": {\n'
+'           "rotation": [-25, 0, -43.51],\n'
+'           "translation": [0, 2.75, 0],\n'
+'           "scale": [0.38, 0.38, 0.38]\n'
+'       },\n'
+'       "firstperson_righthand": {\n'
+'           "rotation": [-2.9, 50.24, -2.92],\n'
+'           "translation": [-0.75, 0.75, 2],\n'
+'           "scale": [0.4, 0.4, 0.4]\n'
+'       },\n'
+'       "firstperson_lefthand": {\n'
+'           "rotation": [-2.9, 50.24, -2.92],\n'
+'           "translation": [-0.75, 0.75, 2],\n'
+'           "scale": [0.4, 0.4, 0.4]\n'
+'       },\n'
+'       "gui": {\n'
+'           "rotation": [24.25, -47, 0],\n'
+'           "translation": [0, 0.25, 0],\n'
+'           "scale": [0.67, 0.67, 0.67]\n'
+'       },\n'
+'       "ground": {\n'
+'           "scale": [0.25, 0.25, 0.25],\n'
+'           "translation": [0, 2.5, 0]\n'
+'		},\n'
+'       "head": {\n'
+'			"scale": [0.801, 0.80295, 0.801]\n'
+'		},\n'
+'		"fixed": {\n'
+'			"translation": [0, 0, -14],\n'
+'			"scale": [2.001, 2.001, 2.001]\n'
+'		}\n'
+'	}\n'
+'}')
+
+        return text

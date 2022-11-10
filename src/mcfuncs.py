@@ -16,3 +16,6 @@ def insert_to_file(file, index, text):
         open(file, 'w').write('')
         content = ''
     open(file, 'w').write(content[:index] + text + content[index:])
+
+def get_json_item_name(json):
+    return json.get('text').lower().replace(' ', '_')
