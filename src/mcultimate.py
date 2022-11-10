@@ -229,17 +229,26 @@ class Datapack:
 
     def gamerule(self, rule, val):
         open(self.loadfunc, 'a').write(f'gamerule {rule} {str(val).lower()}\n')
+    
+    def create_folder(self, name, path):
+        os.mkdir(self.location + f'/data/{self.namespace}/functions/' + path + "/" + name)
 
 
 class Function:
-    def __init__(self, datapack, name):
+    def __init__(self, datapack, name, path=''):
         self.location = ''
         self.filename = name
         self.datapack = datapack
-        open(datapack.location +
-                f'/data/{datapack.namespace}/functions/{self.filename}.mcfunction', 'w').write('')
-        self.location = datapack.location + \
-            f'/data/{datapack.namespace}/functions/{self.filename}.mcfunction'
+        self.location = datapack.location + f'/data/{self.datapack.namespace}/functions'
+        self.base_location = ''
+        if path != '':
+            self.location += '/' + path + '/'
+            self.base_location += path + '/'
+        else:
+            self.location += '/'
+        self.location += f'{self.filename}.mcfunction'
+        self.base_location += f'{self.filename}'
+        open(f'{self.location}', 'w').write('')
 
     def fill(self, from_, to, block, replace=None):
         self.text = f'fill {from_} {to} {block}'
@@ -249,7 +258,7 @@ class Function:
 
     def function(self, func):
         open(self.location, 'a').write(
-            f'function {self.datapack.namespace}:{func.filename}\n')
+            f'function {self.datapack.namespace}:{func.base_location}\n')
 
     def add_trigger(self, name, on_trigger):
         open(self.datapack.loadfunc, 'a').write(
@@ -661,6 +670,12 @@ class Entity:
     def __repr__(self):
         return self.text
 
+class Fixed:
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return 'Fixed:' + str(self.value) + 'b'
 
 class Scores:
     def __init__(self, scores):
@@ -689,7 +704,6 @@ class CustomModelData:
 class Resourcepack:
     def __init__(self, datapack, path, textures_location):
         self.datapack = datapack
-        self.tickfunc = Function(self.datapack, 'tick')
         self.name = path.split('/')[-1]
         self.tloc = textures_location
         self.path = path
@@ -767,7 +781,7 @@ class Resourcepack:
                 str(item_display_name).replace("'", '"') + '\'}',
                 CustomModelData(custom_model_data)
             ]), MYSELF))  # type: ignore
-            self.tickfunc.enable(
+            self.datapack.rtickfunc.enable(
                 "give_" + texture.replace('.png', ''), Player.EVERYONE)
         mjson = self.path + "/assets/minecraft/models/item/" + \
             replace_item + ".json"
@@ -784,31 +798,59 @@ class Resourcepack:
             str(custom_model_data) + '}, "model": "item/' + no_png_texture + '"}'
         self.append_custom_model(mjson, text, replace_item)
 
-    def add_custom_block(self, block_display_name, texture, base_block, create_trigger_for_block):
-        no_png_texture = texture.replace('.png', '')
+    def add(self, what):
+        return what
+
+    def add_custom_gui(self, gui_layout):
+        open_slots = []
+        placeholder_slots = [i for i in range(27)]
+        for slot in gui_layout:
+            placeholder_slots.remove(slot.slot)
+            open_slots.append(slot.slot)
+        open(self.tickfunc, 'a').write()  # type: ignore
+
+class InputSlot:
+    def __init__(self, slot):
+        self.slot = slot
+
+class CustomBlock:
+    def __init__(self, block_display_name, texture, base_block, create_trigger_for_block, datapack, resourcepack):
+        self.datapack = datapack
+        self.resourcepack = resourcepack
+        self.no_png_texture = texture.replace('.png', '')
+        self.datapack.create_folder(self.no_png_texture, "")
+        self.place = Function(self.datapack, self.no_png_texture + '_place', self.no_png_texture)
+        open(self.place.location, 'a').write(f'execute as @e[tag=init_custom_{self.no_png_texture}] at @s run setblock ~ ~ ~ {base_block}\n')
+        open(self.place.location, 'a').write(f'tag @e[tag=init_custom_{self.no_png_texture}] add custom_{self.no_png_texture}\n')
+        open(self.place.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute unless block ~ ~ ~ air run tag @s remove init_custom_{self.no_png_texture}\n')
+        open(self.place.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run function {self.datapack.namespace}:{self.no_png_texture}/{self.no_png_texture}_break\n')
+        self.destroy = Function(self.datapack, self.no_png_texture + '_break', self.no_png_texture)
+        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run kill @e[type=item,nbt=' + '{Item:{id:"minecraft:' + base_block + '"}},limit=1,distance=0..2,sort=nearest]\n')
+        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run kill @s\n')
+        self.datapack.rtickfunc.function(self.place)
         if create_trigger_for_block:
-            give_block_trigger = Function(self.datapack, no_png_texture)
-            self.datapack.rtickfunc.function(give_block_trigger)
-            give_block_trigger.add_trigger('give_' + no_png_texture, Command.
+            self.place.add_trigger('give_' + self.no_png_texture, Command.
             give(Item(GLOW_ITEM_FRAME, [
                 'display:{Name:\'' +
                 str(block_display_name).replace("'", '"') + '\'}',
+                CustomModelData(self.resourcepack.current_custom_block),
                 EntityTag([
-                    Item(BARRIER, [
-                        CustomModelData(self.current_custom_block)
+                    Item(GLOW_ITEM_FRAME, [
+                        CustomModelData(self.resourcepack.current_custom_block)
                     ]),
                     Tags([
-                        "hi"
-                    ])
+                        f'init_custom_{self.no_png_texture}'
+                    ]),
+                    Fixed(1)
                 ])
             ]), MYSELF))  # type: ignore
-            self.tickfunc.enable(
-                "give_" + no_png_texture, Player.EVERYONE)
-        open(self.path + '/assets/minecraft/models/item/' + no_png_texture + '.json', 'w').write(('{\n'
+            self.datapack.rtickfunc.enable(
+                "give_" + self.no_png_texture, Player.EVERYONE)
+        open(self.resourcepack.path + '/assets/minecraft/models/item/' + self.no_png_texture + '.json', 'w').write(('{\n'
 '	"credit": "Made with MCUltimate",\n'
 '	"textures": {\n'
-f'		"0": "block/{no_png_texture}",\n'
-f'		"particle": "block/{no_png_texture}"\n'
+f'		"0": "block/{self.no_png_texture}",\n'
+f'		"particle": "block/{self.no_png_texture}"\n'
 '	},\n'
 '	"elements": [\n'
 '		{\n'
@@ -825,10 +867,32 @@ f'		"particle": "block/{no_png_texture}"\n'
 '		}\n'
 '	],\n'
 '	"display": {\n'
-'		"thirdperson_righthand": {\n'
-'			"rotation": [-25, 0, -43.51],\n'
-'			"translation": [0, 2.75, 0],\n'
-'			"scale": [0.38, 0.38, 0.38]\n'
+'       "thirdperson_righthand": {\n'
+'           "rotation": [-25, 0, -43.51],\n'
+'           "translation": [0, 2.75, 0],\n'
+'           "scale": [0.38, 0.38, 0.38]\n'
+'       },\n'
+'       "firstperson_righthand": {\n'
+'           "rotation": [-2.9, 50.24, -2.92],\n'
+'           "translation": [-0.75, 0.75, 2],\n'
+'           "scale": [0.4, 0.4, 0.4]\n'
+'       },\n'
+'       "firstperson_lefthand": {\n'
+'           "rotation": [-2.9, 50.24, -2.92],\n'
+'           "translation": [-0.75, 0.75, 2],\n'
+'           "scale": [0.4, 0.4, 0.4]\n'
+'       },\n'
+'       "gui": {\n'
+'           "rotation": [24.25, -47, 0],\n'
+'           "translation": [0, 0.25, 0],\n'
+'           "scale": [0.67, 0.67, 0.67]\n'
+'       },\n'
+'       "ground": {\n'
+'           "scale": [0.25, 0.25, 0.25],\n'
+'           "translation": [0, 2.5, 0]\n'
+'		},\n'
+'       "head": {\n'
+'			"scale": [0.801, 0.80295, 0.801]\n'
 '		},\n'
 '		"fixed": {\n'
 '			"translation": [0, 0, -14],\n'
@@ -836,31 +900,32 @@ f'		"particle": "block/{no_png_texture}"\n'
 '		}\n'
 '	}\n'
 '}'))
-        shutil.copyfile(self.tloc + '/' + texture, self.path + '/assets/minecraft/textures/block/' + texture)
-        if 'barrier' not in self.writes:
-            open(self.path + '/assets/minecraft/models/item/barrier.json', 'w').write(('{\n'
+        shutil.copyfile(self.resourcepack.tloc + '/' + texture, self.resourcepack.path + '/assets/minecraft/textures/block/' + texture)
+        if 'glow_item_frame' not in self.resourcepack.writes:
+            open(self.resourcepack.path + '/assets/minecraft/models/item/glow_item_frame.json', 'w').write(('{\n'
                                          '	"parent": "item/generated",\n'
                                          '	"textures": {\n'
-                                         f'		"layer0": "item/barrier"\n'
+                                         f'		"layer0": "item/glow_item_frame"\n'
                                          '	},\n'
                                          '	\n'
                                          '	"overrides": [\n'
                                          '\t\t\n'
                                          '	]\n'
                                          '}\n'))
-        self.append_custom_model(self.path + '/assets/minecraft/models/item/barrier.json', '{"predicate": {"custom_model_data":' + \
-            str(self.current_custom_block) + '}, "model": "item/' + no_png_texture + '"}', 'barrier')
-        self.writes.append('barrier')
-        self.current_custom_block += 1
-
-    def add_custom_gui(self, gui_layout):
-        open_slots = []
-        placeholder_slots = [i for i in range(27)]
-        for slot in gui_layout:
-            placeholder_slots.remove(slot.slot)
-            open_slots.append(slot.slot)
-        open(self.tickfunc, 'a').write()  # type: ignore
-
-class InputSlot:
-    def __init__(self, slot):
-        self.slot = slot
+        self.resourcepack.append_custom_model(self.resourcepack.path + '/assets/minecraft/models/item/glow_item_frame.json', '{"predicate": {"custom_model_data":' + \
+            str(self.resourcepack.current_custom_block) + '}, "model": "item/' + self.no_png_texture + '"}', 'glow_item_frame')
+        self.resourcepack.writes.append('glow_item_frame')
+        self.resourcepack.current_custom_block += 1
+    
+    def on_destroy(self, on_destroy):
+        text = on_destroy + '\n'
+        if type(on_destroy) == Function:
+            text = f'function {self.datapack.namespace}:{on_destroy.base_location}\n'
+        open(self.destroy.location, 'a').write(text)
+    
+    def on_place(self, on_place):
+        text = f'execute as @e[tag=init_custom_{self.no_png_texture}] at @s run ' + on_place + '\n'
+        if type(on_place) == Function:
+            text += f'function {self.datapack.namespace}:{on_place.base_location}\n'
+        content = open(self.place.location, 'r').read()
+        open(self.place.location, 'w').write(text + content)
