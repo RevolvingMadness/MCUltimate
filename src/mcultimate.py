@@ -229,9 +229,10 @@ class Datapack:
 
     def gamerule(self, rule, val):
         open(self.loadfunc, 'a').write(f'gamerule {rule} {str(val).lower()}\n')
-    
+
     def create_folder(self, name, path):
-        os.mkdir(self.location + f'/data/{self.namespace}/functions/' + path + "/" + name)
+        os.mkdir(self.location +
+                 f'/data/{self.namespace}/functions/' + path + "/" + name)
 
 
 class Function:
@@ -239,7 +240,8 @@ class Function:
         self.location = ''
         self.filename = name
         self.datapack = datapack
-        self.location = datapack.location + f'/data/{self.datapack.namespace}/functions'
+        self.location = datapack.location + \
+            f'/data/{self.datapack.namespace}/functions'
         self.base_location = ''
         if path != '':
             self.location += '/' + path + '/'
@@ -340,7 +342,8 @@ class Command:
         return f'give {who} {item.to_give()} {str(count)}\n'  # type: ignore
 
     def enable(trigger, who):  # /scoreboard players enable <who> <trigger>
-        return f'scoreboard players enable {who} {trigger.name}\n'  # type: ignore
+        # type: ignore
+        return f'scoreboard players enable {who} {trigger.name}\n'
 
     def tellraw(text, who):  # /tellraw <who> <text>
         text = str(text).replace('\'', '"').replace('\n', '')
@@ -510,7 +513,8 @@ class ArmorItems:
             if item == {}:
                 self.text += '{}'
             else:
-                self.text += '{' + to_nbt_item(str(item))[:-1] + '}'  # type: ignore
+                # type: ignore
+                self.text += '{' + to_nbt_item(str(item))[:-1] + '}'
             if i != len(armor)-1:
                 self.text += ','
         self.text += ']'
@@ -667,12 +671,14 @@ class Entity:
     def __repr__(self):
         return self.text
 
+
 class Fixed:
     def __init__(self, value):
         self.value = value
 
     def __repr__(self):
         return 'Fixed:' + str(self.value) + 'b'
+
 
 class Scores:
     def __init__(self, scores):
@@ -687,6 +693,7 @@ class Scores:
     def __repr__(self):
         return self.text
 
+
 class Motion:
     def __init__(self, mot):
         self.text = '['
@@ -695,9 +702,10 @@ class Motion:
             if i != len(mot)-1:
                 self.text += ','
         self.text += ']'
-        
+
     def __repr__(self):
         return 'Motion:' + self.text
+
 
 class CustomModelData:
     def __init__(self, value):
@@ -748,21 +756,21 @@ class Resourcepack:
     def replace_item_texture(self, item, texture):
         shutil.copyfile(self.tloc + "/" + texture, self.path +
                         "/assets/minecraft/textures/item/" + item + ".png")
-    
+
     def append_custom_model(self, filepath, text, in_writes):
         try:
             content = open(filepath, 'r').read()
         except FileNotFoundError:
             open(filepath, 'w').write(('{\n'
-                                         '	"parent": "item/generated",\n'
-                                         '	"textures": {\n'
-                                         f'		"layer0": "item/{in_writes}"\n'
-                                         '	},\n'
-                                         '	\n'
-                                         '	"overrides": [\n'
-                                         '\t\t\n'
-                                         '	]\n'
-                                         '}\n'))
+                                       '	"parent": "item/generated",\n'
+                                       '	"textures": {\n'
+                                       f'		"layer0": "item/{in_writes}"\n'
+                                       '	},\n'
+                                       '	\n'
+                                       '	"overrides": [\n'
+                                       '\t\t\n'
+                                       '	]\n'
+                                       '}\n'))
             content = open(filepath, 'r').read()
         open(filepath, 'w').write(content[:-6])
 
@@ -777,35 +785,6 @@ class Resourcepack:
 
         open(filepath, 'a').write(text + '\n\t]\n}\n')
 
-    def add_custom_item(self, item_display_name, texture, replace_item, custom_model_data, create_trigger_for_item):
-        no_png_texture = texture.replace('.png', '')
-        texture_json = self.path + "/assets/minecraft/models/item/" + \
-            texture.replace('.png', '.json')
-        if create_trigger_for_item:
-            give_item_trigger = Function(self.datapack, 'give_' + no_png_texture)
-            self.datapack.rtickfunc.function(give_item_trigger)
-            give_item_trigger.add_trigger('give_' + texture.replace('.png', ''), Command.give(Item(replace_item, [
-                'display:{Name:\'' +
-                str(item_display_name).replace("'", '"') + '\'}',
-                CustomModelData(custom_model_data)
-            ]), MYSELF))  # type: ignore
-            self.datapack.rtickfunc.enable(
-                "give_" + texture.replace('.png', ''), Player.EVERYONE)
-        mjson = self.path + "/assets/minecraft/models/item/" + \
-            replace_item + ".json"
-
-        shutil.copyfile(self.tloc + "/" + texture, self.path +
-                        "/assets/minecraft/textures/item/" + texture)
-        open(texture_json, 'w').write(('{\n'
-                                       '    "parent": "item/handheld",\n'
-                                       '    "textures": {\n'
-                                       f'        "layer0": "item/' + texture.replace('.png', '') + '"\n'
-                                       '    }\n'
-                                       '}\n'))
-        text = '{"predicate": {"custom_model_data":' + \
-            str(custom_model_data) + '}, "model": "item/' + no_png_texture + '"}'
-        self.append_custom_model(mjson, text, replace_item)
-
     def add(self, what):
         return what
 
@@ -817,123 +796,246 @@ class Resourcepack:
             open_slots.append(slot.slot)
         open(self.tickfunc, 'a').write()  # type: ignore
 
+
 class InputSlot:
     def __init__(self, slot):
         self.slot = slot
+
+
+class CustomItem:
+    def __init__(self, item_display_name, texture, replace_item, custom_model_data, create_trigger_for_item, datapack, resourcepack):
+        self.datapack = datapack
+        self.resourcepack = resourcepack
+        no_png_texture = texture.replace('.png', '')
+        texture_json = self.resourcepack.path + "/assets/minecraft/models/item/" + \
+            texture.replace('.png', '.json')
+        if create_trigger_for_item:
+            give_item_trigger = Function(
+                self.datapack, 'give_' + no_png_texture)
+            self.datapack.rtickfunc.function(give_item_trigger)
+            give_item_trigger.add_trigger('give_' + texture.replace('.png', ''), Command.give(Item(replace_item, [
+                'display:{Name:\'' +
+                str(item_display_name).replace("'", '"') + '\'}',
+                CustomModelData(custom_model_data)
+            ]), MYSELF))  # type: ignore
+            self.datapack.rtickfunc.enable(
+                "give_" + texture.replace('.png', ''), Player.EVERYONE)
+        mjson = self.resourcepack.path + "/assets/minecraft/models/item/" + \
+            replace_item + ".json"
+
+        shutil.copyfile(self.resourcepack.tloc + "/" + texture, self.resourcepack.path +
+                        "/assets/minecraft/textures/item/" + texture)
+        open(texture_json, 'w').write(('{\n'
+                                       '    "parent": "item/handheld",\n'
+                                       '    "textures": {\n'
+                                       f'        "layer0": "item/' +
+                                       texture.replace('.png', '') + '"\n'
+                                       '    }\n'
+                                       '}\n'))
+        text = '{"predicate": {"custom_model_data":' + \
+            str(custom_model_data) + '}, "model": "item/' + no_png_texture + '"}'
+        self.resourcepack.append_custom_model(mjson, text, replace_item)
+
 
 class CustomBlock:
     def __init__(self, block_display_name, texture, base_block, create_trigger_for_block, datapack, resourcepack):
         self.datapack = datapack
         self.resourcepack = resourcepack
-        self.no_png_texture = texture.replace('.png', '')
+        self.block_display_name = block_display_name
+        self.create_trigger_for_block = create_trigger_for_block
+        self.texture = texture
+        self.base_block = base_block
+        if '.png' in texture:
+            self.no_png_texture = texture.replace('.png', '')
+            self.png_texture()
+        else:
+            self.no_json_texture = texture.replace('.json', '')
+            self.json_texture()
+
+    def png_texture(self):
         self.datapack.create_folder(self.no_png_texture, "")
-        self.place = Function(self.datapack, self.no_png_texture + '_place', self.no_png_texture)
-        open(self.place.location, 'a').write(f'execute as @e[tag=init_custom_{self.no_png_texture}] at @s run setblock ~ ~ ~ {base_block}\n')
-        open(self.place.location, 'a').write(f'tag @e[tag=init_custom_{self.no_png_texture}] add custom_{self.no_png_texture}\n')
-        open(self.place.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute unless block ~ ~ ~ air run tag @s remove init_custom_{self.no_png_texture}\n')
-        open(self.place.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run function {self.datapack.namespace}:{self.no_png_texture}/{self.no_png_texture}_break\n')
-        self.destroy = Function(self.datapack, self.no_png_texture + '_break', self.no_png_texture)
-        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run kill @e[type=item,nbt=' + '{Item:{id:"minecraft:' + base_block + '"}},limit=1,distance=0..2,sort=nearest]\n')
-        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run summon item ~ ~ ~ ' + '{' + Item(GLOW_ITEM_FRAME, ['display:{Name:\'' + str(block_display_name).replace("'", '"') + '\'}', CustomModelData(self.resourcepack.current_custom_block), EntityTag([ Item(GLOW_ITEM_FRAME, [ CustomModelData(self.resourcepack.current_custom_block) ]), Tags([ f'init_custom_{self.no_png_texture}' ]), Fixed(1) ]) ]).to_entity() + ',Motion:[0.07d, 0.2d, 0.1d]}\n')
-        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run kill @s\n')
+        self.place = Function(
+            self.datapack, self.no_png_texture + '_place', self.no_png_texture)
+        self.destroy = Function(
+            self.datapack, self.no_png_texture + '_break', self.no_png_texture)
+        open(self.place.location, 'a').write(
+            f'execute as @e[tag=init_custom_{self.no_png_texture}] at @s run setblock ~ ~ ~ {self.base_block}\n')
+        open(self.place.location, 'a').write(
+            f'tag @e[tag=init_custom_{self.no_png_texture}] add custom_{self.no_png_texture}\n')
+        open(self.place.location, 'a').write(
+            f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute unless block ~ ~ ~ air run tag @s remove init_custom_{self.no_png_texture}\n')
+        open(self.place.location, 'a').write(
+            f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run function {self.datapack.namespace}:{self.no_png_texture}/{self.no_png_texture}_break\n')
+        open(self.destroy.location, 'a').write(
+            f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run kill @e[type=item,nbt=' + '{Item:{id:"minecraft:' + self.base_block + '"}},limit=1,distance=0..2,sort=nearest]\n')
+        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run summon item ~ ~ ~ ' + '{' + Item(GLOW_ITEM_FRAME, ['display:{Name:\'' + str(self.block_display_name).replace("'", '"') + '\'}', CustomModelData(
+            self.resourcepack.current_custom_block), EntityTag([Silent(1), Item(GLOW_ITEM_FRAME, [CustomModelData(self.resourcepack.current_custom_block)]), Tags([f'init_custom_{self.no_png_texture}']), Fixed(1)])]).to_entity() + ',Motion:[0.07d, 0.2d, 0.1d]}\n')
+        open(self.destroy.location, 'a').write(
+            f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run kill @s\n')
         self.datapack.rtickfunc.function(self.place)
-        if create_trigger_for_block:
+        if self.create_trigger_for_block:
             self.place.add_trigger('give_' + self.no_png_texture, Command.
-            give(Item(GLOW_ITEM_FRAME, [
-                'display:{Name:\'' +
-                str(block_display_name).replace("'", '"') + '\'}',
-                CustomModelData(self.resourcepack.current_custom_block),
-                EntityTag([
-                    Item(GLOW_ITEM_FRAME, [
-                        CustomModelData(self.resourcepack.current_custom_block)
-                    ]),
-                    Tags([
-                        f'init_custom_{self.no_png_texture}'
-                    ]),
-                    Fixed(1)
-                ])
-            ]), MYSELF))  # type: ignore
+                                   give(Item(GLOW_ITEM_FRAME, [
+                                       'display:{Name:\'' +
+                                       str(self.block_display_name).replace(
+                                           "'", '"') + '\'}',
+                                       CustomModelData(
+                                           self.resourcepack.current_custom_block),
+                                       EntityTag([
+                                           Silent(1),
+                                           Item(GLOW_ITEM_FRAME, [
+                                               CustomModelData(
+                                                   self.resourcepack.current_custom_block)
+                                           ]),
+                                           Tags([
+                                               f'init_custom_{self.no_png_texture}'
+                                           ]),
+                                           Fixed(1)
+                                       ])
+                                   ]), MYSELF))  # type: ignore
             self.datapack.rtickfunc.enable(
                 "give_" + self.no_png_texture, Player.EVERYONE)
         open(self.resourcepack.path + '/assets/minecraft/models/item/' + self.no_png_texture + '.json', 'w').write(('{\n'
-'	"credit": "Made with MCUltimate",\n'
-'	"textures": {\n'
-f'		"0": "block/{self.no_png_texture}",\n'
-f'		"particle": "block/{self.no_png_texture}"\n'
-'	},\n'
-'	"elements": [\n'
-'		{\n'
-'			"from": [0, 0, 0],\n'
-'			"to": [16, 16, 16],\n'
-'			"faces": {\n'
-'				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
-'				"east": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
-'				"south": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
-'				"west": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
-'				"up": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
-'				"down": {"uv": [0, 0, 16, 16], "texture": "#0"}\n'
-'			}\n'
-'		}\n'
-'	],\n'
-'	"display": {\n'
-'       "thirdperson_righthand": {\n'
-'           "rotation": [-25, 0, -43.51],\n'
-'           "translation": [0, 2.75, 0],\n'
-'           "scale": [0.38, 0.38, 0.38]\n'
-'       },\n'
-'       "firstperson_righthand": {\n'
-'           "rotation": [-2.9, 50.24, -2.92],\n'
-'           "translation": [-0.75, 0.75, 2],\n'
-'           "scale": [0.4, 0.4, 0.4]\n'
-'       },\n'
-'       "firstperson_lefthand": {\n'
-'           "rotation": [-2.9, 50.24, -2.92],\n'
-'           "translation": [-0.75, 0.75, 2],\n'
-'           "scale": [0.4, 0.4, 0.4]\n'
-'       },\n'
-'       "gui": {\n'
-'           "rotation": [24.25, -47, 0],\n'
-'           "translation": [0, 0.25, 0],\n'
-'           "scale": [0.67, 0.67, 0.67]\n'
-'       },\n'
-'       "ground": {\n'
-'           "scale": [0.25, 0.25, 0.25],\n'
-'           "translation": [0, 2.5, 0]\n'
-'		},\n'
-'       "head": {\n'
-'			"scale": [0.801, 0.80295, 0.801]\n'
-'		},\n'
-'		"fixed": {\n'
-'			"translation": [0, 0, -14],\n'
-'			"scale": [2.001, 2.001, 2.001]\n'
-'		}\n'
-'	}\n'
-'}'))
-        shutil.copyfile(self.resourcepack.tloc + '/' + texture, self.resourcepack.path + '/assets/minecraft/textures/block/' + texture)
+                                                                                                                    '	"credit": "Made with MCUltimate",\n'
+                                                                                                                    '	"textures": {\n'
+                                                                                                                    f'		"0": "block/{self.no_png_texture}",\n'
+                                                                                                                    f'		"particle": "block/{self.no_png_texture}"\n'
+                                                                                                                    '	},\n'
+                                                                                                                    '	"elements": [\n'
+                                                                                                                    '		{\n'
+                                                                                                                    '			"from": [0, 0, 0],\n'
+                                                                                                                    '			"to": [16, 16, 16],\n'
+                                                                                                                    '			"faces": {\n'
+                                                                                                                    '				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+                                                                                                                    '				"east": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+                                                                                                                    '				"south": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+                                                                                                                    '				"west": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+                                                                                                                    '				"up": {"uv": [0, 0, 16, 16], "texture": "#0"},\n'
+                                                                                                                    '				"down": {"uv": [0, 0, 16, 16], "texture": "#0"}\n'
+                                                                                                                    '			}\n'
+                                                                                                                    '		}\n'
+                                                                                                                    '	],\n'
+                                                                                                                    '	"display": {\n'
+                                                                                                                    '       "thirdperson_righthand": {\n'
+                                                                                                                    '           "rotation": [-25, 0, -43.51],\n'
+                                                                                                                    '           "translation": [0, 2.75, 0],\n'
+                                                                                                                    '           "scale": [0.38, 0.38, 0.38]\n'
+                                                                                                                    '       },\n'
+                                                                                                                    '       "firstperson_righthand": {\n'
+                                                                                                                    '           "rotation": [-2.9, 50.24, -2.92],\n'
+                                                                                                                    '           "translation": [-0.75, 0.75, 2],\n'
+                                                                                                                    '           "scale": [0.4, 0.4, 0.4]\n'
+                                                                                                                    '       },\n'
+                                                                                                                    '       "firstperson_lefthand": {\n'
+                                                                                                                    '           "rotation": [-2.9, 50.24, -2.92],\n'
+                                                                                                                    '           "translation": [-0.75, 0.75, 2],\n'
+                                                                                                                    '           "scale": [0.4, 0.4, 0.4]\n'
+                                                                                                                    '       },\n'
+                                                                                                                    '       "gui": {\n'
+                                                                                                                    '           "rotation": [24.25, -47, 0],\n'
+                                                                                                                    '           "translation": [0, 0.25, 0],\n'
+                                                                                                                    '           "scale": [0.67, 0.67, 0.67]\n'
+                                                                                                                    '       },\n'
+                                                                                                                    '       "ground": {\n'
+                                                                                                                    '           "scale": [0.25, 0.25, 0.25],\n'
+                                                                                                                    '           "translation": [0, 2.5, 0]\n'
+                                                                                                                    '		},\n'
+                                                                                                                    '       "head": {\n'
+                                                                                                                    '			"scale": [0.801, 0.80295, 0.801]\n'
+                                                                                                                    '		},\n'
+                                                                                                                    '		"fixed": {\n'
+                                                                                                                    '			"translation": [0, 0, -14],\n'
+                                                                                                                    '			"scale": [2.001, 2.001, 2.001]\n'
+                                                                                                                    '		}\n'
+                                                                                                                    '	}\n'
+                                                                                                                    '}'))
+        shutil.copyfile(self.resourcepack.tloc + '/' + self.texture,
+                        self.resourcepack.path + '/assets/minecraft/textures/block/' + self.texture)
         if 'glow_item_frame' not in self.resourcepack.writes:
             open(self.resourcepack.path + '/assets/minecraft/models/item/glow_item_frame.json', 'w').write(('{\n'
-                                         '	"parent": "item/generated",\n'
-                                         '	"textures": {\n'
-                                         f'		"layer0": "item/glow_item_frame"\n'
-                                         '	},\n'
-                                         '	\n'
-                                         '	"overrides": [\n'
-                                         '\t\t\n'
-                                         '	]\n'
-                                         '}\n'))
-        self.resourcepack.append_custom_model(self.resourcepack.path + '/assets/minecraft/models/item/glow_item_frame.json', '{"predicate": {"custom_model_data":' + \
-            str(self.resourcepack.current_custom_block) + '}, "model": "item/' + self.no_png_texture + '"}', 'glow_item_frame')
+                                                                                                            '	"parent": "item/generated",\n'
+                                                                                                            '	"textures": {\n'
+                                                                                                            f'		"layer0": "item/glow_item_frame"\n'
+                                                                                                            '	},\n'
+                                                                                                            '	\n'
+                                                                                                            '	"overrides": [\n'
+                                                                                                            '\t\t\n'
+                                                                                                            '	]\n'
+                                                                                                            '}\n'))
+        self.resourcepack.append_custom_model(self.resourcepack.path + '/assets/minecraft/models/item/glow_item_frame.json', '{"predicate": {"custom_model_data":' +
+                                              str(self.resourcepack.current_custom_block) + '}, "model": "item/' + self.no_png_texture + '"}', 'glow_item_frame')
         self.resourcepack.writes.append('glow_item_frame')
         self.resourcepack.current_custom_block += 1
-    
+
+    def json_texture(self):
+        self.datapack.create_folder(self.no_json_texture, "")
+        self.place = Function(
+            self.datapack, self.no_json_texture + '_place', self.no_json_texture)
+        self.destroy = Function(
+            self.datapack, self.no_json_texture + '_break', self.no_json_texture)
+        open(self.place.location, 'a').write(
+            f'execute as @e[tag=init_custom_{self.no_json_texture}] at @s run setblock ~ ~ ~ {self.base_block}\n')
+        open(self.place.location, 'a').write(
+            f'tag @e[tag=init_custom_{self.no_json_texture}] add custom_{self.no_json_texture}\n')
+        open(self.place.location, 'a').write(
+            f'execute as @e[tag=custom_{self.no_json_texture}] at @s run execute unless block ~ ~ ~ air run tag @s remove init_custom_{self.no_json_texture}\n')
+        open(self.place.location, 'a').write(
+            f'execute as @e[tag=custom_{self.no_json_texture}] at @s run execute if block ~ ~ ~ air run function {self.datapack.namespace}:{self.no_json_texture}/{self.no_json_texture}_break\n')
+        open(self.destroy.location, 'a').write(
+            f'execute as @e[tag=custom_{self.no_json_texture}] at @s run execute if block ~ ~ ~ air run kill @e[type=item,nbt=' + '{Item:{id:"minecraft:' + self.base_block + '"}},limit=1,distance=0..2,sort=nearest]\n')
+        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_json_texture}] at @s run execute if block ~ ~ ~ air run summon item ~ ~ ~ ' + '{' + Item(GLOW_ITEM_FRAME, ['display:{Name:\'' + str(self.block_display_name).replace("'", '"') + '\'}', CustomModelData(
+            self.resourcepack.current_custom_block), EntityTag([Silent(1), Item(GLOW_ITEM_FRAME, [CustomModelData(self.resourcepack.current_custom_block)]), Tags([f'init_custom_{self.no_json_texture}']), Fixed(1)])]).to_entity() + ',Motion:[0.07d, 0.2d, 0.1d]}\n')
+        open(self.destroy.location, 'a').write(
+            f'execute as @e[tag=custom_{self.no_json_texture}] at @s run execute if block ~ ~ ~ air run kill @s\n')
+        self.datapack.rtickfunc.function(self.place)
+        if self.create_trigger_for_block:
+            self.place.add_trigger('give_' + self.no_json_texture, Command.
+                                   give(Item(GLOW_ITEM_FRAME, [
+                                       'display:{Name:\'' +
+                                       str(self.block_display_name).replace(
+                                           "'", '"') + '\'}',
+                                       CustomModelData(
+                                           self.resourcepack.current_custom_block),
+                                       EntityTag([
+                                           Silent(1),
+                                           Item(GLOW_ITEM_FRAME, [
+                                               CustomModelData(
+                                                   self.resourcepack.current_custom_block)
+                                           ]),
+                                           Tags([
+                                               f'init_custom_{self.no_json_texture}'
+                                           ]),
+                                           Fixed(1)
+                                       ])
+                                   ]), MYSELF))  # type: ignore
+            self.datapack.rtickfunc.enable(
+                "give_" + self.no_json_texture, Player.EVERYONE)
+        shutil.copyfile(self.resourcepack.tloc + '/' + self.texture,
+                        self.resourcepack.path + '/assets/minecraft/models/item/' + self.texture)
+        if 'glow_item_frame' not in self.resourcepack.writes:
+            open(self.resourcepack.path + '/assets/minecraft/models/item/glow_item_frame.json', 'w').write(('{\n'
+                                                                                                            '	"parent": "item/generated",\n'
+                                                                                                            '	"textures": {\n'
+                                                                                                            f'		"layer0": "item/glow_item_frame"\n'
+                                                                                                            '	},\n'
+                                                                                                            '	\n'
+                                                                                                            '	"overrides": [\n'
+                                                                                                            '\t\t\n'
+                                                                                                            '	]\n'
+                                                                                                            '}\n'))
+        self.resourcepack.append_custom_model(self.resourcepack.path + '/assets/minecraft/models/item/glow_item_frame.json', '{"predicate": {"custom_model_data":' +
+                                              str(self.resourcepack.current_custom_block) + '}, "model": "item/' + self.no_json_texture + '"}', 'glow_item_frame')
+        self.resourcepack.writes.append('glow_item_frame')
+        self.resourcepack.current_custom_block += 1
+
     def on_destroy(self, on_destroy):
         text = on_destroy + '\n'
         if type(on_destroy) == Function:
             text = f'function {self.datapack.namespace}:{on_destroy.base_location}\n'
         open(self.destroy.location, 'a').write(text)
-    
+
     def on_place(self, on_place):
-        text = f'execute as @e[tag=init_custom_{self.no_png_texture}] at @s run ' + on_place + '\n'
+        text = f'execute as @e[tag=init_custom_{self.no_json_texture}] at @s run ' + on_place + '\n'
         if type(on_place) == Function:
             text += f'function {self.datapack.namespace}:{on_place.base_location}\n'
         content = open(self.place.location, 'r').read()
