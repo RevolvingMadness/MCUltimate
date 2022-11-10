@@ -594,9 +594,6 @@ class Item:
         self.text = ''
         self.nbt = nbt
         self.count = count
-    
-    def to_item_frame(self):
-        ...
 
     def to_give(self):
         self.text = self.item + '{'
@@ -690,6 +687,17 @@ class Scores:
     def __repr__(self):
         return self.text
 
+class Motion:
+    def __init__(self, mot):
+        self.text = '['
+        for i, item in enumerate(mot):
+            self.text += str(item) + 'd'
+            if i != len(mot)-1:
+                self.text += ','
+        self.text += ']'
+        
+    def __repr__(self):
+        return 'Motion:' + self.text
 
 class CustomModelData:
     def __init__(self, value):
@@ -826,6 +834,7 @@ class CustomBlock:
         open(self.place.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run function {self.datapack.namespace}:{self.no_png_texture}/{self.no_png_texture}_break\n')
         self.destroy = Function(self.datapack, self.no_png_texture + '_break', self.no_png_texture)
         open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run kill @e[type=item,nbt=' + '{Item:{id:"minecraft:' + base_block + '"}},limit=1,distance=0..2,sort=nearest]\n')
+        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run summon item ~ ~ ~ ' + '{' + Item(GLOW_ITEM_FRAME, ['display:{Name:\'' + str(block_display_name).replace("'", '"') + '\'}', CustomModelData(self.resourcepack.current_custom_block), EntityTag([ Item(GLOW_ITEM_FRAME, [ CustomModelData(self.resourcepack.current_custom_block) ]), Tags([ f'init_custom_{self.no_png_texture}' ]), Fixed(1) ]) ]).to_entity() + ',Motion:[0.07d, 0.2d, 0.1d]}\n')
         open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run kill @s\n')
         self.datapack.rtickfunc.function(self.place)
         if create_trigger_for_block:
