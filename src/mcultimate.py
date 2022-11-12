@@ -931,6 +931,10 @@ class CustomBlock:
         self.base_block = base_block
         self.json_name = get_json_item_name(block_display_name)
         self.datapack.create_folder(self.json_name, "")
+        self.place = Function(self.datapack, self.json_name + "_place", self.json_name)
+        self.destroy = Function(
+            self.datapack, self.json_name + "_break", self.json_name
+        )
         open(self.destroy.location, "a").write(
             f"execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run summon item ~ ~ ~ "
             + "{"
@@ -959,10 +963,6 @@ class CustomBlock:
                 ],
             ).to_entity()
             + ",Motion:[0.07d, 0.2d, 0.1d]}\n"
-        )
-        self.place = Function(self.datapack, self.json_name + "_place", self.json_name)
-        self.destroy = Function(
-            self.datapack, self.json_name + "_break", self.json_name
         )
         open(self.place.location, "a").write(
             f"execute as @e[tag=init_custom_{self.json_name}] at @s run setblock ~ ~ ~ {self.base_block}\n"
