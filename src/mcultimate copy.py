@@ -4,12 +4,10 @@ from mcfuncs import *
 
 ######################## DATAPACKS ########################
 
-datapack = None
-resourcepack = None
 
 class Trigger:
-    def __init__(self, name, on_trigger):
-        
+    def __init__(self, datapack, name, on_trigger):
+        self.datapack = datapack
         self.json_name = name
         self.on_trigger = on_trigger
 
@@ -35,14 +33,14 @@ class Scoreboard:
                 f"function {datapack.namespace}:{result.filename}\n"
             )
 
-    def __init__(self, name, criteria):
+    def __init__(self, datapack, name, criteria):
         self.json_name = name
         self.criteria = criteria
-        
+        self.datapack = datapack
         self.value = {}
 
     def set_score(self, who, value):
-        open(datapack.tickfunc, "a").write(
+        open(self.datapack.tickfunc, "a").write(
             f"scoreboard players set {who} {self.json_name} {str(value)}\n"
         )
 
@@ -172,12 +170,13 @@ class ArmorItems:  # type: ignore
 
 
 class Datapack:
-    def __init__(self, namespace, location):
+    def __init__(self, namespace, location_arg, desc=""):
         global datapack
-        self.location = location
+        self.location = location_arg
         datapack = self
         self.json_namespace = namespace.lower()
         self.custom_items = []
+        self.desc = desc
         self.namespace = namespace
         self.tickfunc = (
             self.location + f"/data/{self.json_namespace}/functions/tick.mcfunction"
@@ -227,8 +226,8 @@ class Datapack:
         os.mkdir(self.location + f"/data/{self.json_namespace}")
         os.mkdir(self.location + f"/data/{self.json_namespace}/functions")
         self.function_num = 1
-        self.rtickfunc = Function("tick")
-        self.rloadfunc = Function("load")
+        self.rtickfunc = Function(self, "tick")
+        self.rloadfunc = Function(self, "load")
 
     def add_scoreboard(self, object):
         object.datapack = self
@@ -252,11 +251,11 @@ class Datapack:
 
 
 class Function:
-    def __init__(self, name, path=""):
+    def __init__(self, datapack, name, path=""):
         self.location = ""
         self.filename = name
-        
-        self.location = datapack.location + f"/data/{datapack.namespace}/functions"
+        self.datapack = datapack
+        self.location = datapack.location + f"/data/{self.datapack.namespace}/functions"
         self.base_location = ""
         if path != "":
             self.location += "/" + path + "/"
@@ -275,11 +274,11 @@ class Function:
 
     def function(self, func):
         open(self.location, "a").write(
-            f"function {datapack.namespace}:{func.base_location}\n"
+            f"function {self.datapack.namespace}:{func.base_location}\n"
         )
 
     def add_trigger(self, name, on_trigger):
-        open(datapack.loadfunc, "a").write(
+        open(self.datapack.loadfunc, "a").write(
             f"scoreboard objectives add {name} trigger\n"
         )
         open(self.location, "a").write(
@@ -295,7 +294,7 @@ class Function:
 
     def run(self, function):  # /function <function>
         open(self.location, "a").write(
-            f"function {datapack.namespace}:{function.filename}\n"
+            f"function {self.datapack.namespace}:{function.filename}\n"
         )
 
     def give(self, item, who=Player.EVERYONE, count=1):  # /give <who> <item> <count>
@@ -737,9 +736,9 @@ class CustomModelData:
 
 
 class Resourcepack:
-    def __init__(self, path, textures_location):
+    def __init__(self, datapack, path, textures_location):
         global resourcepack
-        
+        self.datapack = datapack
         resourcepack = self
         self.json_name = path.split("/")[-1]
         self.tloc = textures_location
@@ -837,17 +836,17 @@ class CustomItem:
         datapack,
         resourcepack,
     ):
-        
-        
+        self.datapack = datapack
+        self.resourcepack = resourcepack
         no_png_texture = texture.replace(".png", "")
         texture_json = (
-            resourcepack.path
+            self.resourcepack.path
             + "/assets/minecraft/models/item/"
             + texture.replace(".png", ".json")
         )
         if create_trigger_for_item:
-            give_item_trigger = Function("give_" + no_png_texture)
-            datapack.rtickfunc.function(give_item_trigger)
+            give_item_trigger = Function(self.datapack, "give_" + no_png_texture)
+            self.datapack.rtickfunc.function(give_item_trigger)
             give_item_trigger.add_trigger(
                 "give_" + texture.replace(".png", ""),
                 Command.give(
@@ -863,19 +862,19 @@ class CustomItem:
                     MYSELF,
                 ),
             )  # type: ignore
-            datapack.rtickfunc.enable(
+            self.datapack.rtickfunc.enable(
                 "give_" + texture.replace(".png", ""), Player.EVERYONE
             )
         mjson = (
-            resourcepack.path
+            self.resourcepack.path
             + "/assets/minecraft/models/item/"
             + replace_item
             + ".json"
         )
 
         shutil.copyfile(
-            resourcepack.tloc + "/" + texture,
-            resourcepack.path + "/assets/minecraft/textures/item/" + texture,
+            self.resourcepack.tloc + "/" + texture,
+            self.resourcepack.path + "/assets/minecraft/textures/item/" + texture,
         )
         open(texture_json, "w").write(
             (
@@ -894,7 +893,7 @@ class CustomItem:
             + no_png_texture
             + '"}'
         )
-        resourcepack.append_custom_model(mjson, text, replace_item)
+        self.resourcepack.append_custom_model(mjson, text, replace_item)
 
 
 class CustomBlock:
@@ -903,19 +902,21 @@ class CustomBlock:
         block_display_name,
         texture,
         base_block,
-        create_trigger_for_block
+        create_trigger_for_block,
+        datapack,
+        resourcepack,
     ):
-        
-        
+        self.datapack = datapack
+        self.resourcepack = resourcepack
         self.block_display_name = block_display_name
         self.create_trigger_for_block = create_trigger_for_block
         self.texture = texture
         self.base_block = base_block
         self.json_name = get_json_item_name(block_display_name)
-        datapack.create_folder(self.json_name, "")
-        self.place = Function(self.json_name + "_place", self.json_name)
+        self.datapack.create_folder(self.json_name, "")
+        self.place = Function(self.datapack, self.json_name + "_place", self.json_name)
         self.destroy = Function(
-            self.json_name + "_break", self.json_name
+            self.datapack, self.json_name + "_break", self.json_name
         )
         open(self.destroy.location, "a").write(
             f"execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run summon item ~ ~ ~ "
@@ -926,7 +927,7 @@ class CustomBlock:
                     "display:{Name:'"
                     + str(self.block_display_name).replace("'", '"')
                     + "'}",
-                    CustomModelData(resourcepack.current_custom_block),
+                    CustomModelData(self.resourcepack.current_custom_block),
                     EntityTag(
                         [
                             Silent(1),
@@ -934,7 +935,7 @@ class CustomBlock:
                                 GLOW_ITEM_FRAME,
                                 [
                                     CustomModelData(
-                                        resourcepack.current_custom_block
+                                        self.resourcepack.current_custom_block
                                     )
                                 ],
                             ),
@@ -956,7 +957,7 @@ class CustomBlock:
             f"execute as @e[tag=custom_{self.json_name}] at @s run execute unless block ~ ~ ~ air run tag @s remove init_custom_{self.json_name}\n"
         )
         open(self.place.location, "a").write(
-            f"execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run function {datapack.namespace}:{self.json_name}/{self.json_name}_break\n"
+            f"execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run function {self.datapack.namespace}:{self.json_name}/{self.json_name}_break\n"
         )
         open(self.destroy.location, "a").write(
             f"execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run kill @e[type=item,nbt="
@@ -967,17 +968,17 @@ class CustomBlock:
         if type(texture) == SidedTextures:
             texture = texture.to_custom_block()
             open(
-                resourcepack.path
+                self.resourcepack.path
                 + "/assets/minecraft/models/item/"
                 + get_json_item_name(block_display_name)
                 + ".json",
                 "w",
             ).write(texture)
-            resourcepack.append_custom_model(
-                resourcepack.path
+            self.resourcepack.append_custom_model(
+                self.resourcepack.path
                 + "/assets/minecraft/models/item/glow_item_frame.json",
                 '{"predicate": {"custom_model_data":'
-                + str(resourcepack.current_custom_block)
+                + str(self.resourcepack.current_custom_block)
                 + '}, "model": "item/'
                 + get_json_item_name(block_display_name)
                 + '"}',
@@ -994,7 +995,7 @@ class CustomBlock:
         open(self.destroy.location, "a").write(
             f"execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run kill @s\n"
         )
-        datapack.rtickfunc.function(self.place)
+        self.datapack.rtickfunc.function(self.place)
         if self.create_trigger_for_block:
             self.place.add_trigger(
                 "give_" + self.json_name,
@@ -1005,7 +1006,7 @@ class CustomBlock:
                             "display:{Name:'"
                             + str(self.block_display_name).replace("'", '"')
                             + "'}",
-                            CustomModelData(resourcepack.current_custom_block),
+                            CustomModelData(self.resourcepack.current_custom_block),
                             EntityTag(
                                 [
                                     Silent(1),
@@ -1013,7 +1014,7 @@ class CustomBlock:
                                         GLOW_ITEM_FRAME,
                                         [
                                             CustomModelData(
-                                                resourcepack.current_custom_block
+                                                self.resourcepack.current_custom_block
                                             )
                                         ],
                                     ),
@@ -1026,9 +1027,9 @@ class CustomBlock:
                     MYSELF,
                 ),
             )  # type: ignore
-            datapack.rtickfunc.enable("give_" + self.json_name, Player.EVERYONE)
+            self.datapack.rtickfunc.enable("give_" + self.json_name, Player.EVERYONE)
         open(
-            resourcepack.path
+            self.resourcepack.path
             + "/assets/minecraft/models/item/"
             + self.no_png_texture
             + ".json",
@@ -1092,12 +1093,12 @@ class CustomBlock:
             )
         )
         shutil.copyfile(
-            resourcepack.tloc + "/" + self.texture,
-            resourcepack.path + "/assets/minecraft/textures/block/" + self.texture,
+            self.resourcepack.tloc + "/" + self.texture,
+            self.resourcepack.path + "/assets/minecraft/textures/block/" + self.texture,
         )
-        if "glow_item_frame" not in resourcepack.writes:
+        if "glow_item_frame" not in self.resourcepack.writes:
             open(
-                resourcepack.path
+                self.resourcepack.path
                 + "/assets/minecraft/models/item/glow_item_frame.json",
                 "w",
             ).write(
@@ -1114,24 +1115,24 @@ class CustomBlock:
                     "}\n"
                 )
             )
-        resourcepack.append_custom_model(
-            resourcepack.path
+        self.resourcepack.append_custom_model(
+            self.resourcepack.path
             + "/assets/minecraft/models/item/glow_item_frame.json",
             '{"predicate": {"custom_model_data":'
-            + str(resourcepack.current_custom_block)
+            + str(self.resourcepack.current_custom_block)
             + '}, "model": "item/'
             + self.no_png_texture
             + '"}',
             "glow_item_frame",
         )
-        resourcepack.writes.append("glow_item_frame")
-        resourcepack.current_custom_block += 1
+        self.resourcepack.writes.append("glow_item_frame")
+        self.resourcepack.current_custom_block += 1
 
     def json_texture(self):
         open(self.destroy.location, "a").write(
             f"execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run kill @s\n"
         )
-        datapack.rtickfunc.function(self.place)
+        self.datapack.rtickfunc.function(self.place)
         if self.create_trigger_for_block:
             self.place.add_trigger(
                 "give_" + self.json_name,
@@ -1142,7 +1143,7 @@ class CustomBlock:
                             "display:{Name:'"
                             + str(self.block_display_name).replace("'", '"')
                             + "'}",
-                            CustomModelData(resourcepack.current_custom_block),
+                            CustomModelData(self.resourcepack.current_custom_block),
                             EntityTag(
                                 [
                                     Silent(1),
@@ -1150,7 +1151,7 @@ class CustomBlock:
                                         GLOW_ITEM_FRAME,
                                         [
                                             CustomModelData(
-                                                resourcepack.current_custom_block
+                                                self.resourcepack.current_custom_block
                                             )
                                         ],
                                     ),
@@ -1163,14 +1164,14 @@ class CustomBlock:
                     MYSELF,
                 ),
             )  # type: ignore
-            datapack.rtickfunc.enable("give_" + self.json_name, Player.EVERYONE)
+            self.datapack.rtickfunc.enable("give_" + self.json_name, Player.EVERYONE)
         shutil.copyfile(
-            resourcepack.tloc + "/" + self.texture,
-            resourcepack.path + "/assets/minecraft/models/item/" + self.texture,
+            self.resourcepack.tloc + "/" + self.texture,
+            self.resourcepack.path + "/assets/minecraft/models/item/" + self.texture,
         )
-        if "glow_item_frame" not in resourcepack.writes:
+        if "glow_item_frame" not in self.resourcepack.writes:
             open(
-                resourcepack.path
+                self.resourcepack.path
                 + "/assets/minecraft/models/item/glow_item_frame.json",
                 "w",
             ).write(
@@ -1187,23 +1188,23 @@ class CustomBlock:
                     "}\n"
                 )
             )
-        resourcepack.append_custom_model(
-            resourcepack.path
+        self.resourcepack.append_custom_model(
+            self.resourcepack.path
             + "/assets/minecraft/models/item/glow_item_frame.json",
             '{"predicate": {"custom_model_data":'
-            + str(resourcepack.current_custom_block)
+            + str(self.resourcepack.current_custom_block)
             + '}, "model": "item/'
             + self.no_json_texture
             + '"}',
             "glow_item_frame",
         )
-        resourcepack.writes.append("glow_item_frame")
-        resourcepack.current_custom_block += 1
+        self.resourcepack.writes.append("glow_item_frame")
+        self.resourcepack.current_custom_block += 1
 
     def on_destroy(self, on_destroy):
         text = on_destroy + "\n"
         if type(on_destroy) == Function:
-            text = f"function {datapack.namespace}:{on_destroy.base_location}\n"
+            text = f"function {self.datapack.namespace}:{on_destroy.base_location}\n"
         open(self.destroy.location, "a").write(text)
 
     def on_place(self, on_place):
@@ -1213,21 +1214,21 @@ class CustomBlock:
             + "\n"
         )
         if type(on_place) == Function:
-            text += f"function {datapack.namespace}:{on_place.base_location}\n"
+            text += f"function {self.datapack.namespace}:{on_place.base_location}\n"
         content = open(self.place.location, "r").read()
         open(self.place.location, "w").write(text + content)
 
 
 class SidedTextures:
-    def __init__(self, top, bottom, left, right, front, back):
+    def __init__(self, top, bottom, left, right, front, back, datapack, resourcepack):
         self.top = top
         self.bottom = bottom
         self.left = left
         self.right = right
         self.front = front
         self.back = back
-        
-        
+        self.datapack = datapack
+        self.resourcepack = resourcepack
 
     def to_custom_block(self):
         no_png_top = self.top.replace(".png", "")
@@ -1237,28 +1238,28 @@ class SidedTextures:
         no_png_front = self.front.replace(".png", "")
         no_png_back = self.back.replace(".png", "")
         shutil.copyfile(
-            resourcepack.tloc + "/" + self.top,
-            resourcepack.path + "/assets/minecraft/textures/block/" + self.top,
+            self.resourcepack.tloc + "/" + self.top,
+            self.resourcepack.path + "/assets/minecraft/textures/block/" + self.top,
         )
         shutil.copyfile(
-            resourcepack.tloc + "/" + self.bottom,
-            resourcepack.path + "/assets/minecraft/textures/block/" + self.bottom,
+            self.resourcepack.tloc + "/" + self.bottom,
+            self.resourcepack.path + "/assets/minecraft/textures/block/" + self.bottom,
         )
         shutil.copyfile(
-            resourcepack.tloc + "/" + self.left,
-            resourcepack.path + "/assets/minecraft/textures/block/" + self.left,
+            self.resourcepack.tloc + "/" + self.left,
+            self.resourcepack.path + "/assets/minecraft/textures/block/" + self.left,
         )
         shutil.copyfile(
-            resourcepack.tloc + "/" + self.right,
-            resourcepack.path + "/assets/minecraft/textures/block/" + self.right,
+            self.resourcepack.tloc + "/" + self.right,
+            self.resourcepack.path + "/assets/minecraft/textures/block/" + self.right,
         )
         shutil.copyfile(
-            resourcepack.tloc + "/" + self.front,
-            resourcepack.path + "/assets/minecraft/textures/block/" + self.front,
+            self.resourcepack.tloc + "/" + self.front,
+            self.resourcepack.path + "/assets/minecraft/textures/block/" + self.front,
         )
         shutil.copyfile(
-            resourcepack.tloc + "/" + self.back,
-            resourcepack.path + "/assets/minecraft/textures/block/" + self.back,
+            self.resourcepack.tloc + "/" + self.back,
+            self.resourcepack.path + "/assets/minecraft/textures/block/" + self.back,
         )
 
         text = (
