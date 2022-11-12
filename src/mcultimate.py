@@ -8,7 +8,7 @@ from mcfuncs import *
 class Trigger:
     def __init__(self, datapack, name, on_trigger):
         self.datapack = datapack
-        self.name = name
+        self.json_name = name
         self.on_trigger = on_trigger
 
 
@@ -52,7 +52,7 @@ class Scoreboard:
 
     def __init__(self, datapack_arg, name, criteria):
         global datapack
-        self.name = name
+        self.json_name = name
         self.criteria = criteria
         self.datapack = datapack_arg
         datapack = datapack_arg
@@ -60,7 +60,7 @@ class Scoreboard:
 
     def set_score(self, who, value):
         open(self.datapack.tickfunc, 'a').write(
-            f'scoreboard players set {who} {self.name} {str(value)}\n')
+            f'scoreboard players set {who} {self.json_name} {str(value)}\n')
 
 
 class Enchantment:
@@ -139,7 +139,7 @@ class Player:
     player_types = ['@a', '@s', '@r', '@e', '@p']
 
     def __init__(self, name, nbt):
-        self.name = name
+        self.json_name = name
         self.nbt = nbt
         if name in Player.player_types:
             self.text = name + '['
@@ -177,13 +177,14 @@ class ArmorItems:  # type: ignore
 class Datapack:
     def __init__(self, namespace, location_arg, desc=''):
         self.location = location_arg
-        self.namespace = namespace.lower()
+        self.json_namespace = namespace.lower()
         self.custom_items = []
         self.desc = desc
+        self.namespace = namespace
         self.tickfunc = self.location + \
-            f'/data/{self.namespace}/functions/tick.mcfunction'
+            f'/data/{self.json_namespace}/functions/tick.mcfunction'
         self.loadfunc = self.location + \
-            f'/data/{self.namespace}/functions/load.mcfunction'
+            f'/data/{self.json_namespace}/functions/load.mcfunction'
         try:
             os.mkdir(self.location)
         except FileExistsError:
@@ -202,19 +203,19 @@ class Datapack:
         open(self.location + '/data/minecraft/tags/functions/load.json', 'w').writelines((
             '{\n'
             '    "values": [\n'
-            f'      "{self.namespace}:load"\n'
+            f'      "{self.json_namespace}:load"\n'
             '    ]\n'
             '}'
         ))
         open(self.location + '/data/minecraft/tags/functions/tick.json', 'w').writelines((
             '{\n'
             '    "values": [\n'
-            f'      "{self.namespace}:tick"\n'
+            f'      "{self.json_namespace}:tick"\n'
             '    ]\n'
             '}'
         ))
-        os.mkdir(self.location + f'/data/{self.namespace}')
-        os.mkdir(self.location + f'/data/{self.namespace}/functions')
+        os.mkdir(self.location + f'/data/{self.json_namespace}')
+        os.mkdir(self.location + f'/data/{self.json_namespace}/functions')
         self.function_num = 1
         self.rtickfunc = Function(self, 'tick')
         self.rloadfunc = Function(self, 'load')
@@ -232,7 +233,7 @@ class Datapack:
 
     def create_folder(self, name, path):
         os.mkdir(self.location +
-                 f'/data/{self.namespace}/functions/' + path + "/" + name)
+                 f'/data/{self.json_namespace}/functions/' + path + "/" + name)
 
 
 class Function:
@@ -720,7 +721,7 @@ class CustomModelData:
 class Resourcepack:
     def __init__(self, datapack, path, textures_location):
         self.datapack = datapack
-        self.name = path.split('/')[-1]
+        self.json_name = path.split('/')[-1]
         self.tloc = textures_location
         self.path = path
         self.windex = 101
@@ -845,6 +846,7 @@ class CustomBlock:
         self.create_trigger_for_block = create_trigger_for_block
         self.texture = texture
         self.base_block = base_block
+        self.json_name = get_json_item_name(block_display_name)
         if type(texture) == SidedTextures:
             texture = texture.to_custom_block()
             open(self.resourcepack.path + '/assets/minecraft/models/item/' + get_json_item_name(block_display_name) + '.json', 'w').write(texture)
@@ -857,28 +859,28 @@ class CustomBlock:
             self.json_texture()
 
     def png_texture(self):
-        self.datapack.create_folder(self.no_png_texture, "")
+        self.datapack.create_folder(self.json_name, "")
         self.place = Function(
-            self.datapack, self.no_png_texture + '_place', self.no_png_texture)
+            self.datapack, self.json_name + '_place', self.json_name)
         self.destroy = Function(
-            self.datapack, self.no_png_texture + '_break', self.no_png_texture)
+            self.datapack, self.json_name + '_break', self.json_name)
         open(self.place.location, 'a').write(
-            f'execute as @e[tag=init_custom_{self.no_png_texture}] at @s run setblock ~ ~ ~ {self.base_block}\n')
+            f'execute as @e[tag=init_custom_{self.json_name}] at @s run setblock ~ ~ ~ {self.base_block}\n')
         open(self.place.location, 'a').write(
-            f'tag @e[tag=init_custom_{self.no_png_texture}] add custom_{self.no_png_texture}\n')
+            f'tag @e[tag=init_custom_{self.json_name}] add custom_{self.json_name}\n')
         open(self.place.location, 'a').write(
-            f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute unless block ~ ~ ~ air run tag @s remove init_custom_{self.no_png_texture}\n')
+            f'execute as @e[tag=custom_{self.json_name}] at @s run execute unless block ~ ~ ~ air run tag @s remove init_custom_{self.json_name}\n')
         open(self.place.location, 'a').write(
-            f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run function {self.datapack.namespace}:{self.no_png_texture}/{self.no_png_texture}_break\n')
+            f'execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run function {self.datapack.namespace}:{self.json_name}/{self.json_name}_break\n')
         open(self.destroy.location, 'a').write(
-            f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run kill @e[type=item,nbt=' + '{Item:{id:"minecraft:' + self.base_block + '"}},limit=1,distance=0..2,sort=nearest]\n')
-        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run summon item ~ ~ ~ ' + '{' + Item(GLOW_ITEM_FRAME, ['display:{Name:\'' + str(self.block_display_name).replace("'", '"') + '\'}', CustomModelData(
-            self.resourcepack.current_custom_block), EntityTag([Silent(1), Item(GLOW_ITEM_FRAME, [CustomModelData(self.resourcepack.current_custom_block)]), Tags([f'init_custom_{self.no_png_texture}']), Fixed(1)])]).to_entity() + ',Motion:[0.07d, 0.2d, 0.1d]}\n')
+            f'execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run kill @e[type=item,nbt=' + '{Item:{id:"minecraft:' + self.base_block + '"}},limit=1,distance=0..2,sort=nearest]\n')
+        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run summon item ~ ~ ~ ' + '{' + Item(GLOW_ITEM_FRAME, ['display:{Name:\'' + str(self.block_display_name).replace("'", '"') + '\'}', CustomModelData(
+            self.resourcepack.current_custom_block), EntityTag([Silent(1), Item(GLOW_ITEM_FRAME, [CustomModelData(self.resourcepack.current_custom_block)]), Tags([f'init_custom_{self.json_name}']), Fixed(1)])]).to_entity() + ',Motion:[0.07d, 0.2d, 0.1d]}\n')
         open(self.destroy.location, 'a').write(
-            f'execute as @e[tag=custom_{self.no_png_texture}] at @s run execute if block ~ ~ ~ air run kill @s\n')
+            f'execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run kill @s\n')
         self.datapack.rtickfunc.function(self.place)
         if self.create_trigger_for_block:
-            self.place.add_trigger('give_' + self.no_png_texture, Command.
+            self.place.add_trigger('give_' + self.json_name, Command.
                                    give(Item(GLOW_ITEM_FRAME, [
                                        'display:{Name:\'' +
                                        str(self.block_display_name).replace(
@@ -892,13 +894,13 @@ class CustomBlock:
                                                    self.resourcepack.current_custom_block)
                                            ]),
                                            Tags([
-                                               f'init_custom_{self.no_png_texture}'
+                                               f'init_custom_{self.json_name}'
                                            ]),
                                            Fixed(1)
                                        ])
                                    ]), MYSELF))  # type: ignore
             self.datapack.rtickfunc.enable(
-                "give_" + self.no_png_texture, Player.EVERYONE)
+                "give_" + self.json_name, Player.EVERYONE)
         open(self.resourcepack.path + '/assets/minecraft/models/item/' + self.no_png_texture + '.json', 'w').write(('{\n'
                                                 '	"credit": "Made with MCUltimate",\n'
                                                 '	"textures": {\n'
@@ -972,28 +974,28 @@ class CustomBlock:
         self.resourcepack.current_custom_block += 1
 
     def json_texture(self):
-        self.datapack.create_folder(self.no_json_texture, "")
+        self.datapack.create_folder(self.json_name, "")
         self.place = Function(
-            self.datapack, self.no_json_texture + '_place', self.no_json_texture)
+            self.datapack, self.json_name + '_place', self.json_name)
         self.destroy = Function(
-            self.datapack, self.no_json_texture + '_break', self.no_json_texture)
+            self.datapack, self.json_name + '_break', self.json_name)
         open(self.place.location, 'a').write(
-            f'execute as @e[tag=init_custom_{self.no_json_texture}] at @s run setblock ~ ~ ~ {self.base_block}\n')
+            f'execute as @e[tag=init_custom_{self.json_name}] at @s run setblock ~ ~ ~ {self.base_block}\n')
         open(self.place.location, 'a').write(
-            f'tag @e[tag=init_custom_{self.no_json_texture}] add custom_{self.no_json_texture}\n')
+            f'tag @e[tag=init_custom_{self.json_name}] add custom_{self.json_name}\n')
         open(self.place.location, 'a').write(
-            f'execute as @e[tag=custom_{self.no_json_texture}] at @s run execute unless block ~ ~ ~ air run tag @s remove init_custom_{self.no_json_texture}\n')
+            f'execute as @e[tag=custom_{self.json_name}] at @s run execute unless block ~ ~ ~ air run tag @s remove init_custom_{self.json_name}\n')
         open(self.place.location, 'a').write(
-            f'execute as @e[tag=custom_{self.no_json_texture}] at @s run execute if block ~ ~ ~ air run function {self.datapack.namespace}:{self.no_json_texture}/{self.no_json_texture}_break\n')
+            f'execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run function {self.datapack.namespace}:{self.json_name}/{self.json_name}_break\n')
         open(self.destroy.location, 'a').write(
-            f'execute as @e[tag=custom_{self.no_json_texture}] at @s run execute if block ~ ~ ~ air run kill @e[type=item,nbt=' + '{Item:{id:"minecraft:' + self.base_block + '"}},limit=1,distance=0..2,sort=nearest]\n')
-        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.no_json_texture}] at @s run execute if block ~ ~ ~ air run summon item ~ ~ ~ ' + '{' + Item(GLOW_ITEM_FRAME, ['display:{Name:\'' + str(self.block_display_name).replace("'", '"') + '\'}', CustomModelData(
-            self.resourcepack.current_custom_block), EntityTag([Silent(1), Item(GLOW_ITEM_FRAME, [CustomModelData(self.resourcepack.current_custom_block)]), Tags([f'init_custom_{self.no_json_texture}']), Fixed(1)])]).to_entity() + ',Motion:[0.07d, 0.2d, 0.1d]}\n')
+            f'execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run kill @e[type=item,nbt=' + '{Item:{id:"minecraft:' + self.base_block + '"}},limit=1,distance=0..2,sort=nearest]\n')
+        open(self.destroy.location, 'a').write(f'execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run summon item ~ ~ ~ ' + '{' + Item(GLOW_ITEM_FRAME, ['display:{Name:\'' + str(self.block_display_name).replace("'", '"') + '\'}', CustomModelData(
+            self.resourcepack.current_custom_block), EntityTag([Silent(1), Item(GLOW_ITEM_FRAME, [CustomModelData(self.resourcepack.current_custom_block)]), Tags([f'init_custom_{self.json_name}']), Fixed(1)])]).to_entity() + ',Motion:[0.07d, 0.2d, 0.1d]}\n')
         open(self.destroy.location, 'a').write(
-            f'execute as @e[tag=custom_{self.no_json_texture}] at @s run execute if block ~ ~ ~ air run kill @s\n')
+            f'execute as @e[tag=custom_{self.json_name}] at @s run execute if block ~ ~ ~ air run kill @s\n')
         self.datapack.rtickfunc.function(self.place)
         if self.create_trigger_for_block:
-            self.place.add_trigger('give_' + self.no_json_texture, Command.
+            self.place.add_trigger('give_' + self.json_name, Command.
                                    give(Item(GLOW_ITEM_FRAME, [
                                        'display:{Name:\'' +
                                        str(self.block_display_name).replace(
@@ -1013,7 +1015,7 @@ class CustomBlock:
                                        ])
                                    ]), MYSELF))  # type: ignore
             self.datapack.rtickfunc.enable(
-                "give_" + self.no_json_texture, Player.EVERYONE)
+                "give_" + self.json_name, Player.EVERYONE)
         shutil.copyfile(self.resourcepack.tloc + '/' + self.texture,
                         self.resourcepack.path + '/assets/minecraft/models/item/' + self.texture)
         if 'glow_item_frame' not in self.resourcepack.writes:
