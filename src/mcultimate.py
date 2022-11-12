@@ -1,5 +1,6 @@
 import os
 import shutil
+
 from mcfuncs import *
 
 ######################## DATAPACKS ########################
@@ -12,14 +13,6 @@ class Trigger:
         
         self.json_name = name
         self.on_trigger = on_trigger
-
-
-class Pos:
-    def __init__(self, coord):
-        self.c = coord
-
-    def __repr__(self):
-        return self.c
 
 
 class Scoreboard:
@@ -170,6 +163,19 @@ class ArmorItems:  # type: ignore
     def __repr__(self):
         return self.to_nbt()
 
+class Block:
+    def __init__(self, block, block_states):
+        self.b = block
+        self.b_states = block_states
+        self.text = self.b + '['
+        for i, state in enumerate(self.b_states):
+            self.text += state.__repr__()
+            if i != len(self.b_states)-1:
+                self.text += ','
+        self.text += ']'
+ 
+    def __repr__(self):
+        return self.text
 
 class Datapack:
     def __init__(self, namespace, location):
@@ -272,11 +278,20 @@ class Function:
         if replace != None:
             self.text += " replace " + replace
         open(self.location, "a").write(self.text + "\n")
+    
+    def schedule(self, function, time):
+        open(self.location, "a").write(f'schedule function {datapack.namespace}:{function.filename} {time}')
+
+    def setblock(self, where, block):
+        self.text = f'setblock {where} {block}'
+        open(self.location, "a").write(self.text + '\n')
+
+    def if_block(self, where, block):
+        open(self.location, "a").write(f'execute if block {where} {block} run ')
+        return f'execute if block {where} {block} run'
 
     def function(self, func):
-        open(self.location, "a").write(
-            f"function {datapack.namespace}:{func.base_location}\n"
-        )
+        return f"function {datapack.namespace}:{func.base_location}\n"
 
     def add_trigger(self, name, on_trigger):
         open(datapack.loadfunc, "a").write(
@@ -373,16 +388,19 @@ class Command:
     def kill(who):  # /kill <who>
         return f"kill {who}\n"
 
-    def summon(entity, pos, nbt={}):  # /summon <entity> <pos> <nbt>
+    def if_block(where, block):
+        return f'execute if block {where} {block} run'
+
+    def summon(entity, pos, nbt=[]):  # /summon <entity> <pos> <nbt>
         nbtdata = "{"
-        for i, key in enumerate(nbt):
-            nbtdata += key + ":" + str(nbt.get(key))
-            if type(nbt.get(key)) == int:
-                nbtdata += "b"
+        for i, tag in enumerate(nbt):
+            if type(tag) == Tags:
+                tag = tag.normal()
+            nbtdata += tag
             if i != len(nbt) - 1:
                 nbtdata += ", "
         nbtdata += "}"
-        return "summon " + entity + " " + pos.to_str() + " " + nbtdata  # type: ignore
+        return "summon " + entity + " " + pos + " " + nbtdata  # type: ignore
 
     def if_score(score, value):
         return f"execute if score @s {score} matches {value} run "
@@ -724,6 +742,12 @@ class Motion:
     def __repr__(self):
         return "Motion:" + self.text
 
+class Age:
+    def __init__(self, value):
+        self.value = value
+    
+    def __repr__(self):
+        return 'age=' + str(self.value)
 
 class CustomModelData:
     def __init__(self, value):
@@ -983,12 +1007,13 @@ class CustomBlock:
                 + '"}',
                 "glow_item_frame",
             )
+        elif type(texture) == CustomBlockModel:
+            self.texture = texture.json
+            self.no_json_texture = texture.json.replace(".json", "")
+            self.json_texture()
         elif ".png" in texture:
             self.no_png_texture = texture.replace(".png", "")
             self.png_texture()
-        else:
-            self.no_json_texture = texture.replace(".json", "")
-            self.json_texture()
 
     def png_texture(self):
         open(self.destroy.location, "a").write(
@@ -1207,13 +1232,12 @@ class CustomBlock:
         open(self.destroy.location, "a").write(text)
 
     def on_place(self, on_place):
-        text = (
-            f"execute as @e[tag=init_custom_{self.no_json_texture}] at @s run "
-            + on_place
-            + "\n"
-        )
+        text = f"execute as @e[tag=init_custom_{self.no_json_texture}] at @s run "
         if type(on_place) == Function:
             text += f"function {datapack.namespace}:{on_place.base_location}\n"
+        else:
+            text += on_place
+        text += '\n'
         content = open(self.place.location, "r").read()
         open(self.place.location, "w").write(text + content)
 
@@ -1324,3 +1348,13 @@ class SidedTextures:
         )
 
         return text
+
+class CustomBlockModel:
+    def __init__(self, json, textures):
+        self.json = json
+        for texture in textures:
+            shutil.copy(resourcepack.tloc + '/' + texture, resourcepack.path + '/assets/minecraft/textures/block/' + texture)
+
+ 
+    def __repr__(self):
+        return self.json

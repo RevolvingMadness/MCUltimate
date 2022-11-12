@@ -79,20 +79,6 @@ When you are coding, the names of the variables **DO NOT MATTER!!!**
   ```
 </details>
 
-## Documentation
-Classes
-<details><summary><strong>Color</strong></summary>
-
-#### Usage
-```python
-...
-
-tick.tellraw(Player.EVERYONE, [{
-	'text': 'This is the color yellow',
-	'color': Color.YELLOW
-}]
-```
-</details>
 
 ## Installation
 
@@ -110,3 +96,26 @@ from mcultimate import *
 ## Releases
 
 I will try my best to release a new version every week. If I do release a new version, it will be on Friday and If I cant release a new version I will try to release one as soon as possible!
+
+
+## Documentation
+
+#### Trigger
+Arguments:
+	datapack | Your main datapack
+		Type: Datapack
+	name | The name of the trigger (ex. "give_diamond")
+		Type: str
+	on_trigger | What you want to happen when it gets triggered
+		Type: str or Function
+
+*NOT USED*
+
+#### Pos
+Arguments:
+	coord | The coordinate (ex. "~ ~ ~")
+		Type: str
+
+#### Scoreboard
+Arguments:
+	datapack
