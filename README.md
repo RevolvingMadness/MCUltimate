@@ -91,3 +91,6 @@ from mcultimate import *
 ## Releases
 
 I will try my best to release a new version every week. If I do release a new version, it will be on Friday and If I cant release a new version I will try to release one as soon as possible!
+
+## Changelog
+You can find the changelog [here](https://gist.github.com/RevolvingMadness/2b2c18bfef326a28ae7c8a6b18fcaaa7)
