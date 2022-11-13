@@ -8,31 +8,21 @@ from mcfuncs import *
 datapack = None
 resourcepack = None
 
-class Trigger:
-    def __init__(self, name, on_trigger):
-        
-        self.json_name = name
-        self.on_trigger = on_trigger
-
-
 class Scoreboard:
-    def matches(values, result):
-        for item in values:
-            open(datapack.tickfunc, "a").write(
-                f"execute if score @s {item} matches {str(values.get(item))} run "
-            )
-        if type(result) == str:
-            open(datapack.tickfunc, "a").write(result + "\n")
-        elif type(result) == Function:
-            open(datapack.tickfunc, "a").write(
-                f"function {datapack.namespace}:{result.filename}\n"
-            )
+    '''
+    Parameters:
+        name (str): The name of the scoreboard
+        criteria (str): The criteria of the scoreboard.
 
+    Usage:
+        right_click = Scoreboard('right_click', 'minecraft.used:minecraft.carrot_on_a_stick')
+
+    Returns:
+        None
+    '''
     def __init__(self, name, criteria):
         self.json_name = name
         self.criteria = criteria
-        
-        self.value = {}
 
     def set_score(self, who, value):
         open(datapack.tickfunc, "a").write(
@@ -40,49 +30,21 @@ class Scoreboard:
         )
 
 
-class Enchantment:
-    AQUA_AFFINITY = "aqua_affinity"
-    BANE_OF_ARTHROPODS = "bane_of_arthropods"
-    BLAST_PROTECTION = "blast_protection"
-    CHANNELING = "channeling"
-    CURSE_OF_BINDING = "curse_of_binding"
-    CURSE_OF_VANISHING = "curse_of_vanishing"
-    DEPTH_STRIDER = "depth_strider"
-    EFFICIENCY = "efficiency"
-    FEATHER_FALLING = "feather_falling"
-    FIRE_ASPECT = "fire_aspect"
-    FIRE_PROTECTION = "fire_protection"
-    FLAME = "flame"
-    FORTUNE = "fortune"
-    FROST_WALKER = "frost_walker"
-    IMPALING = "impaling"
-    INFINITY = "infinity"
-    KNOCKBACK = "knockback"
-    LOOTING = "looting"
-    LOYALTY = "loyalty"
-    LUCK_OF_THE_SEA = "luck_of_the_sea"
-    LURE = "lure"
-    MENDING = "mending"
-    MULTISHOT = "multishot"
-    PIERCING = "piercing"
-    POWER = "power"
-    PROJECTILE_PROTECTION = "projectile_protection"
-    PROTECTION = "protection"
-    PUNCH = "punch"
-    QUICK_CHARGE = "quick_charge"
-    RESPIRATION = "respiration"
-    RIPTIDE = "riptide"
-    SHARPNESS = "sharpness"
-    SILK_TOUCH = "silk_touch"
-    SMITE = "smite"
-    SOUL_SPEED = "soul_speed"
-    SWEEPING_EDGE = "sweeping_edge"
-    SWIFT_SNEAK = "swift_sneak"
-    THORNS = "thorns"
-    UNBREAKING = "unbreaking"
-
 
 class Color:
+    '''
+    Parameters:
+        None
+
+    Usage:
+        load.tellraw(Player.EVERYONE, [{
+            "text": "This is the color green or a RGB value",
+            "color": Color.GREEN | Color.RGB(50, 100, 150)
+        }])
+
+    Returns:
+        The RGB value in hex
+    '''
     BLACK = "black"
     DARK_BLUE = "dark_blue"
     DARK_GREEN = "dark_green"
@@ -106,6 +68,20 @@ class Color:
 
 
 class Player:
+    '''
+    Parameters:
+        name (str): The name of the player.
+        nbt (list): The nbt of the player
+
+    Usage:
+        load.tellraw(Player('RevolvingMadness', [Tags(["owner"])]), [{
+            "text": "You are the owner!",
+            "color": Color.DARK_RED
+        }])
+
+    Returns:
+        None
+    '''
     EVERYONE = "@a"
     MYSELF = "@s"
     SELF = "@s"
@@ -138,6 +114,24 @@ class Player:
 
 
 class ArmorItems:  # type: ignore
+    '''
+    Parameters:
+        head (str): The head item
+        chestplate (str): The chestplate item
+        leggings (str): The leggings item
+        boots (str): The boots item
+
+    Usage:
+        func.summon(ARMOR_STAND, '~ ~ ~', [ArmorItems(
+            Item(DIAMOND_HELMET),      heads item
+            Item(AIR),                 chestplates item
+            Item(CHAINMAIL_LEGGINGS),  leggings item
+            Item(LEATHER_BOOTS)       boots item
+        )])
+
+    Returns:
+        None
+    '''
     def __init__(self, head="air", chestplate="air", leggings="air", boots="air"):
         self.head = head
         self.chestplate = chestplate
@@ -163,6 +157,7 @@ class ArmorItems:  # type: ignore
     def __repr__(self):
         return self.to_nbt()
 
+
 class Block:
     def __init__(self, block, block_states):
         self.b = block
@@ -173,9 +168,10 @@ class Block:
             if i != len(self.b_states)-1:
                 self.text += ','
         self.text += ']'
- 
+
     def __repr__(self):
         return self.text
+
 
 class Datapack:
     def __init__(self, namespace, location):
@@ -186,10 +182,12 @@ class Datapack:
         self.custom_items = []
         self.namespace = namespace
         self.tickfunc = (
-            self.location + f"/data/{self.json_namespace}/functions/tick.mcfunction"
+            self.location +
+            f"/data/{self.json_namespace}/functions/tick.mcfunction"
         )
         self.loadfunc = (
-            self.location + f"/data/{self.json_namespace}/functions/load.mcfunction"
+            self.location +
+            f"/data/{self.json_namespace}/functions/load.mcfunction"
         )
         try:
             os.mkdir(self.location)
@@ -238,7 +236,8 @@ class Datapack:
 
     def add_scoreboard(self, object):
         object.datapack = self
-        open(self.loadfunc, "a").write(f"scoreboard objectives remove {object.name}\n")
+        open(self.loadfunc, "a").write(
+            f"scoreboard objectives remove {object.name}\n")
         open(self.loadfunc, "a").write(
             f"scoreboard objectives add {object.name} {object.criteria}\n"
         )
@@ -261,8 +260,9 @@ class Function:
     def __init__(self, name, path=""):
         self.location = ""
         self.filename = name
-        
-        self.location = datapack.location + f"/data/{datapack.namespace}/functions"
+
+        self.location = datapack.location + \
+            f"/data/{datapack.namespace}/functions"
         self.base_location = ""
         if path != "":
             self.location += "/" + path + "/"
@@ -273,21 +273,36 @@ class Function:
         self.base_location += f"{self.filename}"
         open(self.location, "w").write("")
 
+    def matches(self, values, result):
+        for item in values:
+            open(self.location, "a").write(
+                f"execute if score @s {item} matches {str(values.get(item))} run "
+            )
+        if type(result) == str:
+            open(self.location, "a").write(result + "\n")
+        elif type(result) == Function:
+            open(self.location, "a").write(
+                f"function {datapack.namespace}:{result.filename}\n"
+            )
+
+
     def fill(self, from_, to, block, replace=None):
         self.text = f"fill {from_} {to} {block}"
         if replace != None:
             self.text += " replace " + replace
         open(self.location, "a").write(self.text + "\n")
-    
+
     def schedule(self, function, time):
-        open(self.location, "a").write(f'schedule function {datapack.namespace}:{function.filename} {time}')
+        open(self.location, "a").write(
+            f'schedule function {datapack.namespace}:{function.filename} {time}')
 
     def setblock(self, where, block):
         self.text = f'setblock {where} {block}'
         open(self.location, "a").write(self.text + '\n')
 
     def if_block(self, where, block):
-        open(self.location, "a").write(f'execute if block {where} {block} run ')
+        open(self.location, "a").write(
+            f'execute if block {where} {block} run ')
         return f'execute if block {where} {block} run'
 
     def function(self, func):
@@ -318,7 +333,8 @@ class Function:
         open(self.location, "a").write(f"give {who} {item} {str(count)}\n")
 
     def enable(self, trigger, who):  # /scoreboard players enable <who> <trigger>
-        open(self.location, "a").write(f"scoreboard players enable {who} {trigger}\n")
+        open(self.location, "a").write(
+            f"scoreboard players enable {who} {trigger}\n")
 
     def tellraw(self, who, text):  # /tellraw <who> <text>
         text = str(text).replace("'", '"').replace("\n", "")
@@ -411,7 +427,8 @@ class Enchantments:
         self.text = "Enchantments:["
         for i, enchs in enumerate(enchs_list):
             for key in enchs:
-                self.text += '{id:"' + key + '",lvl:' + str(enchs.get(key)) + "}"
+                self.text += '{id:"' + key + \
+                    '",lvl:' + str(enchs.get(key)) + "}"
             if i != len(enchs_list) - 1:
                 self.text += ","
         self.text += "]"
@@ -537,7 +554,8 @@ class HandItems:
 
 class HandDropChances:
     def __init__(self, left, right):
-        self.text = "HandDropChances:[" + str(left) + "f," + str(right) + "f" + "]"
+        self.text = "HandDropChances:[" + \
+            str(left) + "f," + str(right) + "f" + "]"
 
     def __repr__(self):
         return self.text
@@ -648,7 +666,8 @@ class Item:
         return self.text
 
     def to_entity(self):
-        result = 'Item:{id:"minecraft:' + self.item + '",Count:' + str(self.count) + "b"
+        result = 'Item:{id:"minecraft:' + self.item + \
+            '",Count:' + str(self.count) + "b"
         if self.nbt != []:
             result += ",tag:{"
             for i, nbt in enumerate(self.nbt):
@@ -742,12 +761,14 @@ class Motion:
     def __repr__(self):
         return "Motion:" + self.text
 
+
 class Age:
     def __init__(self, value):
         self.value = value
-    
+
     def __repr__(self):
         return 'age=' + str(self.value)
+
 
 class CustomModelData:
     def __init__(self, value):
@@ -763,7 +784,7 @@ class CustomModelData:
 class Resourcepack:
     def __init__(self, path, textures_location):
         global resourcepack
-        
+
         resourcepack = self
         self.json_name = path.split("/")[-1]
         self.tloc = textures_location
@@ -861,8 +882,7 @@ class CustomItem:
         datapack,
         resourcepack,
     ):
-        
-        
+
         no_png_texture = texture.replace(".png", "")
         texture_json = (
             resourcepack.path
@@ -906,7 +926,8 @@ class CustomItem:
                 "{\n"
                 '    "parent": "item/handheld",\n'
                 '    "textures": {\n'
-                f'        "layer0": "item/' + texture.replace(".png", "") + '"\n'
+                f'        "layer0": "item/' +
+                texture.replace(".png", "") + '"\n'
                 "    }\n"
                 "}\n"
             )
@@ -929,8 +950,7 @@ class CustomBlock:
         base_block,
         create_trigger_for_block
     ):
-        
-        
+
         self.block_display_name = block_display_name
         self.create_trigger_for_block = create_trigger_for_block
         self.texture = texture
@@ -1051,7 +1071,8 @@ class CustomBlock:
                     MYSELF,
                 ),
             )  # type: ignore
-            datapack.rtickfunc.enable("give_" + self.json_name, Player.EVERYONE)
+            datapack.rtickfunc.enable(
+                "give_" + self.json_name, Player.EVERYONE)
         open(
             resourcepack.path
             + "/assets/minecraft/models/item/"
@@ -1179,7 +1200,8 @@ class CustomBlock:
                                             )
                                         ],
                                     ),
-                                    Tags([f"init_custom_{self.no_json_texture}"]),
+                                    Tags(
+                                        [f"init_custom_{self.no_json_texture}"]),
                                     Fixed(1),
                                 ]
                             ),
@@ -1188,7 +1210,8 @@ class CustomBlock:
                     MYSELF,
                 ),
             )  # type: ignore
-            datapack.rtickfunc.enable("give_" + self.json_name, Player.EVERYONE)
+            datapack.rtickfunc.enable(
+                "give_" + self.json_name, Player.EVERYONE)
         shutil.copyfile(
             resourcepack.tloc + "/" + self.texture,
             resourcepack.path + "/assets/minecraft/models/item/" + self.texture,
@@ -1250,8 +1273,6 @@ class SidedTextures:
         self.right = right
         self.front = front
         self.back = back
-        
-        
 
     def to_custom_block(self):
         no_png_top = self.top.replace(".png", "")
@@ -1349,12 +1370,13 @@ class SidedTextures:
 
         return text
 
+
 class CustomBlockModel:
     def __init__(self, json, textures):
         self.json = json
         for texture in textures:
-            shutil.copy(resourcepack.tloc + '/' + texture, resourcepack.path + '/assets/minecraft/textures/block/' + texture)
+            shutil.copy(resourcepack.tloc + '/' + texture, resourcepack.path +
+                        '/assets/minecraft/textures/block/' + texture)
 
- 
     def __repr__(self):
         return self.json
