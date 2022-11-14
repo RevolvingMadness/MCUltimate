@@ -8,6 +8,7 @@ from mcfuncs import *
 datapack = None
 resourcepack = None
 
+
 class Scoreboard:
     def __init__(self, name, criteria):
         self.json_name = name
@@ -16,8 +17,7 @@ class Scoreboard:
     def set_score(self, who, value):
         open(datapack.tickfunc, "a").write(
             f"scoreboard players set {who} {self.json_name} {str(value)}\n"
-        )
-
+        ) # type: ignore
 
 
 class Color:
@@ -39,7 +39,7 @@ class Color:
     YELLOW = "yellow"
     WHITE = "white"
 
-    def RGB(red, green, blue):
+    def RGB(red, green, blue): # type: ignore
         return "#{:02x}{:02x}{:02x}".format(red, green, blue)
 
 
@@ -228,7 +228,6 @@ class Function:
             open(self.location, "a").write(
                 f"function {datapack.namespace}:{result.filename}\n"
             )
-
 
     def fill(self, from_, to, block, replace=None):
         self.text = f"fill {from_} {to} {block}"
