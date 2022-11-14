@@ -9,17 +9,6 @@ datapack = None
 resourcepack = None
 
 class Scoreboard:
-    '''
-    Parameters:
-        name (str): The name of the scoreboard
-        criteria (str): The criteria of the scoreboard.
-
-    Usage:
-        right_click = Scoreboard('right_click', 'minecraft.used:minecraft.carrot_on_a_stick')
-
-    Returns:
-        None
-    '''
     def __init__(self, name, criteria):
         self.json_name = name
         self.criteria = criteria
@@ -32,19 +21,6 @@ class Scoreboard:
 
 
 class Color:
-    '''
-    Parameters:
-        None
-
-    Usage:
-        load.tellraw(Player.EVERYONE, [{
-            "text": "This is the color green or a RGB value",
-            "color": Color.GREEN | Color.RGB(50, 100, 150)
-        }])
-
-    Returns:
-        The RGB value in hex
-    '''
     BLACK = "black"
     DARK_BLUE = "dark_blue"
     DARK_GREEN = "dark_green"
@@ -68,20 +44,6 @@ class Color:
 
 
 class Player:
-    '''
-    Parameters:
-        name (str): The name of the player.
-        nbt (list): The nbt of the player
-
-    Usage:
-        load.tellraw(Player('RevolvingMadness', [Tags(["owner"])]), [{
-            "text": "You are the owner!",
-            "color": Color.DARK_RED
-        }])
-
-    Returns:
-        None
-    '''
     EVERYONE = "@a"
     MYSELF = "@s"
     SELF = "@s"
@@ -114,24 +76,6 @@ class Player:
 
 
 class ArmorItems:  # type: ignore
-    '''
-    Parameters:
-        head (str): The head item
-        chestplate (str): The chestplate item
-        leggings (str): The leggings item
-        boots (str): The boots item
-
-    Usage:
-        func.summon(ARMOR_STAND, '~ ~ ~', [ArmorItems(
-            Item(DIAMOND_HELMET),      heads item
-            Item(AIR),                 chestplates item
-            Item(CHAINMAIL_LEGGINGS),  leggings item
-            Item(LEATHER_BOOTS)       boots item
-        )])
-
-    Returns:
-        None
-    '''
     def __init__(self, head="air", chestplate="air", leggings="air", boots="air"):
         self.head = head
         self.chestplate = chestplate
